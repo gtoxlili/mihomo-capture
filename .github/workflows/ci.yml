@@ -1,0 +1,41 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm --dir web install --frozen-lockfile
+      - run: pnpm --dir web lint
+      - run: pnpm --dir web build
+      - name: Fetch stock mihomo for integration tests
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "$(uname -s)" in Darwin) os=darwin ;; Linux) os=linux ;; esac
+          case "$(uname -m)" in arm64|aarch64) arch=arm64 ;; x86_64) arch=amd64 ;; esac
+          asset="mihomo-${os}-${arch}-v1.19.33.gz"
+          gh release download v1.19.33 --repo MetaCubeX/mihomo --pattern "$asset" --dir "$RUNNER_TEMP"
+          gzip -d "$RUNNER_TEMP/$asset"
+          chmod +x "$RUNNER_TEMP/${asset%.gz}"
+          echo "MIHOMO_TEST_BINARY=$RUNNER_TEMP/${asset%.gz}" >> "$GITHUB_ENV"
+      - run: go test -race ./...
+      - run: go vet ./...
+      - run: go build -o bin/mihomo-capture ./cmd/mihomo-capture

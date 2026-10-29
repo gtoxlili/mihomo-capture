@@ -1,0 +1,32 @@
+# Paths are relative to this file. Run beside mihomo, under the same user.
+mode: local
+api_listen: 127.0.0.1:19090
+proxy_listen: 127.0.0.1:19091
+egress_listen: 127.0.0.1:19092
+
+# Choose exactly one controller transport.
+controller_url: http://127.0.0.1:9090
+# controller_socket: /absolute/path/to/mihomo/controller.sock
+# If mihomo has a secret, put it in an owner-only file and set this path.
+# controller_token_file: ./controller-token
+
+# The actual configuration loaded by mihomo, including any client-generated
+# rules and proxies. Replace this path. The service never writes this file.
+gateway_config: /absolute/path/to/mihomo/config.yaml
+# Must be inside mihomo's home directory and writable by this user.
+gateway_state_dir: /absolute/path/to/mihomo/mihomo-capture
+
+# Loopback and active interface addresses are discovered automatically.
+# Add the source address reported by mihomo if your TUN uses a different one.
+# local_source_ips: [198.18.0.1]
+
+# To capture a LAN device instead, set mode: gateway and your IPv4 subnet.
+# lan: 192.168.1.0/24
+# ca_listen: 192.168.1.2:19093
+# arp_use_sudo: false  # macOS only; never needed in local mode
+
+data_dir: ./data
+ca_cert_file: ./data/ca.pem
+ca_key_file: ./data/ca-key.pem
+api_token_file: ./data/api-token
+proxy_token_file: ./data/proxy-token
