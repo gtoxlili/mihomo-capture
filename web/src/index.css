@@ -1,0 +1,184 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/ibm-plex-mono/latin-600.css";
+
+/* The console has one light theme; dark: styles of the shadcn components
+   must not follow the operating system's appearance. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono:
+    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, "PingFang SC", monospace;
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-faint: var(--faint);
+  --color-canvas: var(--canvas);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-tally: var(--tally);
+  --color-tally-ink: var(--tally-ink);
+  --color-tally-wash: var(--tally-wash);
+  --color-tally-line: var(--tally-line);
+  --color-warn-wash: var(--warn-wash);
+  --color-warn-ink: var(--warn-ink);
+  --color-warn-line: var(--warn-line);
+  --color-presence: var(--presence);
+  --color-good: var(--good);
+  --color-signal: var(--signal);
+  --color-signal-wash: var(--signal-wash);
+  --color-status-ok: var(--status-ok);
+  --color-status-redirect: var(--status-redirect);
+  --color-status-client: var(--status-client);
+  --color-status-server: var(--status-server);
+  --color-mark-ok: var(--mark-ok);
+  --color-mark-redirect: var(--mark-redirect);
+  --color-mark-client: var(--mark-client);
+  --color-mark-server: var(--mark-server);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.6);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 2.4);
+  --radius-4xl: calc(var(--radius) * 2.8);
+
+  --animate-tally: tally 1.6s ease-in-out infinite;
+  @keyframes tally {
+    0%,
+    100% {
+      opacity: 1;
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--tally) 55%, transparent);
+    }
+    60% {
+      opacity: 0.75;
+      box-shadow: 0 0 0 6px color-mix(in oklab, var(--tally) 0%, transparent);
+    }
+  }
+}
+
+/* Quiet instrument, loud tally. A cool neutral ramp carries almost everything;
+   teal marks what the operator is pointing at, tally red means one thing only:
+   a device is being recorded. Success stays neutral so failures stand out. */
+:root {
+  --canvas: #f7f8fa;
+  --subtle: #f2f4f7;
+  --line: #e4e7ec;
+  --faint: #98a2b3;
+  --ink-2: #475467;
+  --ink: #171c26;
+
+  --signal: #0e7490;
+  /* A device with a current neighbor binding. */
+  --presence: #12a150;
+  --good: #087443;
+  --signal-wash: #ebf6f9;
+
+  --tally: #e5484d;
+  --tally-ink: #b42318;
+  --tally-wash: #fff5f4;
+  --tally-line: #fbd5d2;
+
+  --warn-wash: #fffaeb;
+  --warn-ink: #93370d;
+  --warn-line: #fedf89;
+
+  /* Status text on white; the number itself is the secondary encoding. */
+  --status-ok: #5b6475;
+  --status-redirect: #6941c6;
+  --status-client: #946200;
+  --status-server: #c4155a;
+  /* Status marks on the tally wash (validated against #fff5f4). */
+  --mark-ok: #7d8696;
+  --mark-redirect: #7a5af8;
+  --mark-client: #b47c00;
+  --mark-server: #e0245e;
+
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #ffffff;
+  --secondary: #eaecf0;
+  --secondary-foreground: var(--ink);
+  --muted: var(--subtle);
+  --muted-foreground: #667085;
+  --accent: var(--signal-wash);
+  --accent-foreground: var(--ink);
+  --destructive: #d92d20;
+  --border: var(--line);
+  --input: #d0d5dd;
+  --ring: var(--signal);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+    font-size: 14px;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--signal) 20%, transparent);
+  }
+  :focus-visible {
+    outline-color: var(--signal);
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one elevation the console uses for controls: a hairline and a lift. */
+@utility lift {
+  box-shadow:
+    0 1px 2px rgb(16 24 40 / 0.05),
+    inset 0 -1px 0 rgb(16 24 40 / 0.02);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

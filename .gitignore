@@ -1,0 +1,14 @@
+/bin/
+/data/
+*.p12
+*.pfx
+*.key
+.env
+__pycache__/
+*.pyc
+/config.yaml
+/controller-token
+/logs/
+*.test
+*.tsbuildinfo
+.DS_Store
