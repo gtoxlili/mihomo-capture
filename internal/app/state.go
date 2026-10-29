@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"mihomo-capture/internal/gateway"
+	"github.com/gtoxlili/mihomo-capture/internal/gateway"
 )
 
 type diskModule struct {

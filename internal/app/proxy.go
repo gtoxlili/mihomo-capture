@@ -20,9 +20,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/elazarl/goproxy"
+	"github.com/gtoxlili/mihomo-capture/internal/gateway"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/net/http2"
-	"mihomo-capture/internal/gateway"
 )
 
 type captureBuffer struct {

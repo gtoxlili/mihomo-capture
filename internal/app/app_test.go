@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"mihomo-capture/internal/gateway"
+	"github.com/gtoxlili/mihomo-capture/internal/gateway"
 )
 
 const selectedMAC = "00:11:22:33:44:55"
