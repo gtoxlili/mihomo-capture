@@ -2,6 +2,10 @@
 
 [简体中文](mihomo.zh-CN.md)
 
+![Captured request path through the original policy, inspection, and dedicated outbound](assets/routing.png)
+
+For initial setup, follow the [illustrated connection guide](../README.md#get-connected). This page explains why the return connection keeps the original routing decision.
+
 Mihomo Capture runs on the same computer as mihomo. It reads the actual loaded YAML and uses the controller's `PUT /configs` endpoint to load a copy with capture nodes and an outbound listener. The source file is never written. File rule providers live in `gateway_state_dir`, which must be readable by mihomo and should be inside its home directory.
 
 The service adds proxies, rule providers, and sub-rules prefixed with `mihomo-capture-`, plus an HTTP outbound listener bound to loopback. The capture lane receives TCP from the selected device. The daily lane handles registered module hostnames for trusted devices. Each lane copies the original rules and sub-rules. Mihomo selects a policy while the connection's source metadata is still available, then sends its policy ID in the proxy CONNECT headers. After interception, the service re-enters mihomo through the outbound listener, whose own sub-rules select that policy without evaluating the main rules again. This also lets loopback traffic be captured without repeatedly entering the service.

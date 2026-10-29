@@ -2,6 +2,10 @@
 
 [English](mihomo.md)
 
+![抓包路径：先选策略，再解密，沿专用出口回到原策略](assets/routing.zh-CN.png)
+
+首次使用可以先看 [README 的接入图解](../README.zh-CN.md#怎么接入)。下面说明回源连接为什么保留原来的分流结果。
+
 Mihomo Capture 与 mihomo 运行在同一电脑，读取它实际使用的 YAML，并通过 controller 的 `PUT /configs` 加载一份添加了抓包节点和监听器的运行配置。原 YAML 不会被写入。文件规则集位于 `gateway_state_dir`，mihomo 必须有权读取它们，这个目录应放在 mihomo home 下。
 
 服务添加 `mihomo-capture-` 前缀的代理节点、规则集和子规则，以及一个只监听回环的 HTTP 出口。capture 通道接收选中设备的 TCP；daily 通道只处理已注册模块中的 hostname。两个通道分别复制原始规则和 sub-rules。mihomo 在连接来源信息还完整时选中原策略，转发到服务的 CONNECT 头携带策略 ID。服务解密和记录后通过出口监听器回到该策略，出口使用自己的子规则，不再匹配主规则。这也允许捕获来自 `127.0.0.1` 的本机连接而不循环进入抓包服务。

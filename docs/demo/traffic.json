@@ -1,0 +1,1122 @@
+{
+  "records": [
+    {
+      "id": "00000000000000000000000000000001",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:55Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/projects?limit=20",
+      "host": "api.example.test",
+      "path": "/v1/projects",
+      "status": 200,
+      "duration_ms": 42,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 325,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-001"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-001"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"projects\": [\n    {\n      \"id\": \"demo-001\",\n      \"name\": \"Mihomo Capture\",\n      \"status\": \"active\",\n      \"requests\": 1284\n    },\n    {\n      \"id\": \"demo-002\",\n      \"name\": \"Local API playground\",\n      \"status\": \"active\",\n      \"requests\": 356\n    }\n  ],\n  \"pagination\": {\n    \"limit\": 20,\n    \"has_more\": false\n  }\n}",
+          "size": 325,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/projects?limit=20' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000002",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:54Z",
+      "method": "GET",
+      "url": "https://stream.example.test/events",
+      "host": "stream.example.test",
+      "path": "/events",
+      "status": 101,
+      "duration_ms": 18,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/websocket",
+      "response_size": 0,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-002"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Upgrade": [
+            "websocket"
+          ],
+          "Connection": [
+            "Upgrade"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://stream.example.test/events' -H 'Accept: application/json'",
+      "frames": [
+        {
+          "at": "2026-10-29T12:34:54.000Z",
+          "direction": "client_to_server",
+          "opcode": 1,
+          "final": true,
+          "compressed": false,
+          "body": {
+            "encoding": "utf8",
+            "data": "{\n  \"type\": \"subscribe\",\n  \"channel\": \"projects\"\n}",
+            "size": 50,
+            "truncated": false
+          }
+        },
+        {
+          "at": "2026-10-29T12:34:54.100Z",
+          "direction": "server_to_client",
+          "opcode": 1,
+          "final": true,
+          "compressed": false,
+          "body": {
+            "encoding": "utf8",
+            "data": "{\n  \"type\": \"subscribed\",\n  \"channel\": \"projects\"\n}",
+            "size": 51,
+            "truncated": false
+          }
+        },
+        {
+          "at": "2026-10-29T12:34:54.200Z",
+          "direction": "server_to_client",
+          "opcode": 1,
+          "final": true,
+          "compressed": false,
+          "body": {
+            "encoding": "utf8",
+            "data": "{\n  \"type\": \"project.updated\",\n  \"id\": \"demo-001\",\n  \"status\": \"active\"\n}",
+            "size": 73,
+            "truncated": false
+          }
+        },
+        {
+          "at": "2026-10-29T12:34:54.300Z",
+          "direction": "client_to_server",
+          "opcode": 1,
+          "final": true,
+          "compressed": false,
+          "body": {
+            "encoding": "utf8",
+            "data": "{\n  \"type\": \"ping\",\n  \"sequence\": 1\n}",
+            "size": 37,
+            "truncated": false
+          }
+        },
+        {
+          "at": "2026-10-29T12:34:54.400Z",
+          "direction": "server_to_client",
+          "opcode": 1,
+          "final": true,
+          "compressed": false,
+          "body": {
+            "encoding": "utf8",
+            "data": "{\n  \"type\": \"pong\",\n  \"sequence\": 1\n}",
+            "size": 37,
+            "truncated": false
+          }
+        },
+        {
+          "at": "2026-10-29T12:34:54.500Z",
+          "direction": "server_to_client",
+          "opcode": 1,
+          "final": true,
+          "compressed": false,
+          "body": {
+            "encoding": "utf8",
+            "data": "{\n  \"type\": \"metrics\",\n  \"requests\": 1284,\n  \"latency_ms\": 42\n}",
+            "size": 63,
+            "truncated": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "00000000000000000000000000000003",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:53Z",
+      "method": "POST",
+      "url": "https://api.example.test/v1/projects",
+      "host": "api.example.test",
+      "path": "/v1/projects",
+      "status": 201,
+      "duration_ms": 87,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-003"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-003"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/projects' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000004",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:52Z",
+      "method": "GET",
+      "url": "https://assets.example.test/app.css",
+      "host": "assets.example.test",
+      "path": "/app.css",
+      "status": 200,
+      "duration_ms": 12,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-004"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-004"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://assets.example.test/app.css' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000005",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:51Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/profile",
+      "host": "api.example.test",
+      "path": "/v1/profile",
+      "status": 200,
+      "duration_ms": 35,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-005"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-005"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/profile' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000006",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:50Z",
+      "method": "POST",
+      "url": "https://api.example.test/v1/search",
+      "host": "api.example.test",
+      "path": "/v1/search",
+      "status": 200,
+      "duration_ms": 124,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-006"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-006"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/search' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000007",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:49Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/notifications",
+      "host": "api.example.test",
+      "path": "/v1/notifications",
+      "status": 304,
+      "duration_ms": 23,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 0,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-007"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-007"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/notifications' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000008",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:48Z",
+      "method": "GET",
+      "url": "https://cdn.example.test/fonts/mono.woff2",
+      "host": "cdn.example.test",
+      "path": "/fonts/mono.woff2",
+      "status": 200,
+      "duration_ms": 16,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-008"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-008"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://cdn.example.test/fonts/mono.woff2' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000009",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:47Z",
+      "method": "PATCH",
+      "url": "https://api.example.test/v1/projects/demo",
+      "host": "api.example.test",
+      "path": "/v1/projects/demo",
+      "status": 200,
+      "duration_ms": 64,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-009"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-009"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/projects/demo' -H 'Accept: application/json'"
+    },
+    {
+      "id": "0000000000000000000000000000000a",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:46Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/missing",
+      "host": "api.example.test",
+      "path": "/v1/missing",
+      "status": 404,
+      "duration_ms": 28,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-010"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-010"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/missing' -H 'Accept: application/json'"
+    },
+    {
+      "id": "0000000000000000000000000000000b",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:45Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/activity",
+      "host": "api.example.test",
+      "path": "/v1/activity",
+      "status": 200,
+      "duration_ms": 49,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-011"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-011"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/activity' -H 'Accept: application/json'"
+    },
+    {
+      "id": "0000000000000000000000000000000c",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:44Z",
+      "method": "POST",
+      "url": "https://api.example.test/v1/events",
+      "host": "api.example.test",
+      "path": "/v1/events",
+      "status": 202,
+      "duration_ms": 31,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-012"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-012"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/events' -H 'Accept: application/json'"
+    },
+    {
+      "id": "0000000000000000000000000000000d",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:43Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/preferences",
+      "host": "api.example.test",
+      "path": "/v1/preferences",
+      "status": 200,
+      "duration_ms": 19,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-013"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-013"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/preferences' -H 'Accept: application/json'"
+    },
+    {
+      "id": "0000000000000000000000000000000e",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:42Z",
+      "method": "GET",
+      "url": "https://api.example.test/health",
+      "host": "api.example.test",
+      "path": "/health",
+      "status": 200,
+      "duration_ms": 8,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-014"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-014"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/health' -H 'Accept: application/json'"
+    },
+    {
+      "id": "0000000000000000000000000000000f",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:41Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/projects/demo",
+      "host": "api.example.test",
+      "path": "/v1/projects/demo",
+      "status": 200,
+      "duration_ms": 26,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-015"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-015"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/projects/demo' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000010",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:40Z",
+      "method": "GET",
+      "url": "https://assets.example.test/app.js",
+      "host": "assets.example.test",
+      "path": "/app.js",
+      "status": 200,
+      "duration_ms": 14,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-016"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-016"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://assets.example.test/app.js' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000011",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:39Z",
+      "method": "DELETE",
+      "url": "https://api.example.test/v1/drafts/demo",
+      "host": "api.example.test",
+      "path": "/v1/drafts/demo",
+      "status": 204,
+      "duration_ms": 22,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 0,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-017"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-017"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/drafts/demo' -H 'Accept: application/json'"
+    },
+    {
+      "id": "00000000000000000000000000000012",
+      "device_id": "local",
+      "session": 7,
+      "at": "2026-10-29T12:34:38Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/status",
+      "host": "api.example.test",
+      "path": "/v1/status",
+      "status": 200,
+      "duration_ms": 11,
+      "complete": true,
+      "replayable": true,
+      "content_type": "application/json",
+      "response_size": 32,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "User-Agent": [
+            "Example App / demo"
+          ],
+          "X-Request-Id": [
+            "demo-018"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Cache-Control": [
+            "no-store"
+          ],
+          "X-Request-Id": [
+            "demo-018"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
+          "size": 32,
+          "truncated": false
+        }
+      },
+      "curl": "curl 'https://api.example.test/v1/status' -H 'Accept: application/json'"
+    }
+  ],
+  "devices": [
+    {
+      "id": "local",
+      "mac": "",
+      "label": "本机 · Demo Mac",
+      "ips": [
+        "127.0.0.1",
+        "198.18.0.1"
+      ],
+      "trusted": true,
+      "trust_evidence": "Demo only",
+      "ca_fingerprint": "ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34",
+      "online": true,
+      "capturing": true
+    }
+  ],
+  "status": {
+    "api_version": 2,
+    "capture": {
+      "device_id": "local",
+      "started_at": "2026-10-29T12:26:14Z",
+      "block_udp_ports": [
+        443
+      ],
+      "generation": 7
+    },
+    "hostnames": [],
+    "ca": {
+      "name": "Mihomo Capture CA",
+      "fingerprint": "ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34",
+      "not_after": "2036-10-29T00:00:00Z",
+      "lan_url": ""
+    },
+    "gateway": {
+      "version": "v1.19.33",
+      "catalog": true,
+      "rules": {
+        "capture": 1,
+        "daily": 0
+      }
+    },
+    "gateway_error": "",
+    "storage": {
+      "records": 18,
+      "bytes": 184632,
+      "max_records": 5000,
+      "max_bytes": 268435456,
+      "retention_hours": 24,
+      "last_error": ""
+    }
+  }
+}

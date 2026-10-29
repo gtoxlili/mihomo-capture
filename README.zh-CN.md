@@ -1,32 +1,72 @@
 # Mihomo Capture
 
-[English](README.md) | 简体中文
+[English](README.md) | 简体中文 · [MIT 许可证](LICENSE) · [CI 检查](https://github.com/gtoxlili/mihomo-capture/actions/workflows/ci.yml)
 
-通过电脑上已有的 mihomo 查看 HTTP、HTTPS 请求和 WebSocket 帧。默认抓本机；电脑用作 mihomo 网关时，也可以选择一台局域网设备。
+通过电脑上已有的 mihomo 查看 HTTP、HTTPS 请求和 WebSocket 帧。默认抓本机；电脑用作网关时，也可以选择一台局域网设备。抓包期间仍沿用 mihomo 原来的分流策略。
 
-抓包服务沿用 mihomo 的分流策略。请求先按原始来源地址、端口和规则选出口，再进入抓包服务，所以抓包期间仍然走原来的 DIRECT、代理节点或策略组。服务附带一个网页，用来管理证书、开关抓包、查看请求和复制 curl。
+[![真实 Dashboard：左侧请求列表，右侧响应头与格式化 JSON 正文](docs/assets/dashboard-http.png)](docs/assets/dashboard-http.png)
 
-目前支持 macOS 和 Linux。需要同机运行的原版 mihomo，已用 v1.19.33 验证。Windows 尚未验证。
+*真实界面，演示数据。域名和内容均为 mock，不包含私人抓包记录。点击图片可放大查看。当前 Dashboard 使用中文。*
 
-## 从源码运行
+- 查看请求和响应的头、正文、状态码与耗时。
+- 检查 WebSocket 双向帧，保留分片和压缩标记。
+- 筛选记录，把完整请求复制为 curl 命令。
 
-需要 Go 1.27.3+、Node.js 24+ 和 pnpm 12。先构建网页，再构建二进制：
+<details>
+<summary>查看 WebSocket 抓包截图</summary>
+
+[![WebSocket 连接：六条演示帧，展示方向、时间与载荷](docs/assets/dashboard-websocket.png)](docs/assets/dashboard-websocket.png)
+
+</details>
+
+## 原理先看这张图
+
+mihomo 在原设备的来源 IP 和端口还完整时选策略，再把连接交给抓包服务。服务解密、记录后，经 mihomo 的专用出口回到已经选好的策略，不让回源连接重新匹配主规则。
+
+![流量路径：应用、mihomo 原始规则选策略、抓包服务、专用出口，再沿原策略到目标服务](docs/assets/routing.zh-CN.png)
+
+服务读取最终 YAML，把附加节点与规则装进 mihomo 的**运行配置**，不改原始文件。规则副本、重载和清理的细节见[接入原理与兼容限制](docs/mihomo.zh-CN.md)。
+
+## 怎么接入
+
+需要同机运行的原版 mihomo，并保持 `rule` 模式。目前支持 macOS 和 Linux，集成测试使用 mihomo v1.19.33；Windows 尚未验证。使用桌面客户端时，需要拿到 core 的 controller 和它实际加载的最终 YAML。
+
+![接入三步：填写 controller、最终 YAML 和状态目录，信任 CA，再选择本机抓包](docs/assets/setup.zh-CN.png)
+
+### 1. 构建源码或解压发布包
+
+源码构建需要 Go 1.27.3+、Node.js 24+ 和 pnpm 12：
 
 ```sh
-pnpm --dir web install --frozen-lockfile
-pnpm --dir web build
-go build -o bin/mihomo-capture ./cmd/mihomo-capture
+git clone https://github.com/gtoxlili/mihomo-capture.git
+cd mihomo-capture
+make install
+make build
 cp config.example.yaml config.yaml
 ```
 
-编辑 `config.yaml`，填入这几个值：
+`make build` 先构建网页，再嵌入 `bin/mihomo-capture`。没有 Make 时，依次运行 `pnpm --dir web install --frozen-lockfile`、`pnpm --dir web build` 和 `go build -trimpath -o bin/mihomo-capture ./cmd/mihomo-capture`。
 
-- `controller_url` 或 `controller_socket`，二选一。HTTP controller 示例为 `http://127.0.0.1:9090`。
-- `controller_token_file`，如果 mihomo 设置了 `secret`，把同一个值放进这个权限为 `0600` 的文件。没有 secret 可以省略。
-- `gateway_config`，mihomo 实际加载的配置文件。使用桌面客户端时通常是客户端生成的最终配置，不是订阅文件。
-- `gateway_state_dir`，mihomo home 目录下一个可写的新目录，用来保存两份抓包选择规则。
+[Releases](https://github.com/gtoxlili/mihomo-capture/releases) 有发布包后，也可以直接解压并复制其中的示例配置。运行前请核对发布页的 `SHA256SUMS`。
 
-所有相对路径以配置文件所在目录为准。服务与 mihomo 应使用同一用户运行。controller 不要经过系统代理，也不要暴露到公网。
+### 2. 填入你的 mihomo 配置
+
+修改 `config.yaml`，把路径换成实际安装位置：
+
+```yaml
+mode: local
+controller_url: http://127.0.0.1:9090
+gateway_config: /absolute/path/to/mihomo/config.yaml
+gateway_state_dir: /absolute/path/to/mihomo/mihomo-capture
+# mihomo 有 secret 时，把值写进权限为 0600 的文件：
+# controller_token_file: ./controller-token
+```
+
+`controller_url` 和 `controller_socket` 二选一。`gateway_config` 必须是**最终加载的 YAML**，通常是桌面客户端生成的文件，而非订阅文件。`gateway_state_dir` 放在 mihomo home 下，两者用同一用户运行。服务的相对路径以 `config.yaml` 所在目录为准。controller 保留在本机。
+
+`load-balance`、`include-all` 等配置无法保证抓包前后分流含义一致，下一步的 `-check` 会在开始前报出不兼容原因。[完整限制](docs/mihomo.zh-CN.md#配置限制)见接入文档。
+
+### 3. 信任证书，开始抓包
 
 ```sh
 bin/mihomo-capture -config config.yaml -init
@@ -34,57 +74,56 @@ bin/mihomo-capture -config config.yaml -check
 scripts/run.sh config.yaml
 ```
 
-打开 <http://127.0.0.1:19090>，用 `cat data/api-token` 读取登录令牌。下载网页提供的 `Mihomo Capture CA`，在当前电脑安装并信任。回到设备页，确认“本机”已经信任证书，再开始抓包。服务不会替你修改系统信任库或系统代理。
+打开 <http://127.0.0.1:19090>，用 `cat data/api-token` 读取登录令牌。在设备上安装并完全信任页面提供的 `Mihomo Capture CA`，回到 Dashboard 为“本机”确认信任，再开始抓包。
 
-应用的流量必须已经经过 mihomo，例如系统 HTTP 代理或 TUN。直接连接网络、绕过 mihomo 的请求不会出现。`local` 模式自动使用回环和活动网卡地址；如果 mihomo 显示的来源是额外的 TUN 地址，填入 `local_source_ips`，然后重启服务。
+应用必须已经通过系统代理或 TUN 使用 mihomo，绕过它的流量不会出现。本机模式自动发现回环和活动网卡地址；如果 mihomo 报告了额外的 TUN 来源地址，填入 `local_source_ips`。服务不会替你安装系统证书或修改系统代理。
 
-## 抓局域网设备
+## 抓本机还是局域网设备？
 
-把 `mode` 改成 `gateway`，用 `lan` 指定 IPv4 子网，例如 `192.168.1.0/24`。目标设备必须通过这台电脑的 mihomo 出网。macOS 使用 ARP 邻居表，Linux 需要 `iproute2`。一次只能抓一台设备，设备身份按 MAC 保存。
+| | 本机抓包，默认模式 | 局域网网关抓包 |
+| --- | --- | --- |
+| 配置 | `mode: local` | `mode: gateway`，另填 `lan: 192.168.1.0/24` |
+| 设备来源 | 本机的回环和网卡地址 | 选中的 IPv4 邻居，按 MAC 识别 |
+| 流量必须经过 | 本机 mihomo | 作为该设备网关的本机 mihomo |
+| CA 安装位置 | 当前电脑 | 被选中的设备 |
 
-手机不能访问电脑的回环地址。可以把 `ca_listen` 设为电脑的 LAN 地址和一个空闲端口，手机扫码下载证书。这个监听器只提供公开证书；Dashboard 和 API 仍可以保留在 `127.0.0.1`。安装证书后，在 Dashboard 确认该设备已信任，再开始抓包。确认只是人工记录，服务无法检查远端信任库。
+网关模式使用 macOS ARP 或 Linux `iproute2` 发现设备。手机需要下载证书时，把 `ca_listen` 设为电脑的 LAN 地址和空闲端口；它只提供公开证书，Dashboard 与 API 可以继续留在回环地址。信任确认只是操作者的记录，服务无法远程检查系统信任库。同一时刻只录制一台设备。
 
-## 能抓到什么
+## 限制与清理
 
-请求和响应保留头、body、状态码与耗时；WebSocket 保留方向、opcode、分片和压缩标记。二进制 body 用 base64 表示，gzip、deflate、Brotli 内容另有解压视图。完整请求可以复制成 curl，截断的请求不提供重放命令。列表支持 host、路径、方法、状态码和关键词筛选。
+| 默认设置 | 上限 |
+| --- | --- |
+| 记录保留 | 24 小时 / 5000 条 / 总预算 256 MiB |
+| HTTP 正文 | 每个 1 MiB；二进制用 base64，另有有界 gzip/deflate/Brotli 解压视图 |
+| WebSocket 帧 | 每条请求 128 帧，每帧 16 KiB |
 
-默认保存 24 小时、最多 5000 条、总预算 256 MiB。每个 body 最多 1 MiB；WebSocket 每条请求最多 128 帧，每帧最多 16 KiB。超限会截断记录，网络传输继续。停止、换设备和清空记录都会让旧连接失去继续写记录的资格。进程重启后不会自动恢复抓包。
+达到上限会截断保存内容，转发继续。不完整的请求不提供重放命令。停止、换设备和清空记录都会使旧连接的写入凭证失效；服务重启后不会自动恢复抓包。
 
-证书固定的应用可能拒绝连接。HTTP/3 走 UDP，不在 HTTP 解密范围内；开始抓包时可选阻断该设备 UDP 443，让支持回落的应用改走 TCP，同端口上的其他 UDP 也会受到影响。非 HTTP TCP 和无法解密的协议会透传。
+<details>
+<summary>协议边界和可选模块 hostname</summary>
 
-模块页保留了一个可选功能：读取 Surge `.sgmodule` 的 MITM hostname。它会让受信设备在停止录制后仍对这些 hostname 解密，但不保存记录。模块脚本、改写和规则不执行。不需要这个行为时不要注册模块。
+证书固定的应用可能拒绝拦截。HTTP/3 使用 UDP，无法在这里解密。阻断所选设备的 UDP 443 可促使支持回落的应用走 TCP，也会影响同端口的其他 UDP。非 HTTP TCP 和不属于 HTTP 拦截范围的协议透传。
 
-## 停止与移除
+可选模块页读取 Surge `.sgmodule` 的 MITM hostname。停止录制后，受信设备访问这些 hostname 仍会被解密，但不保存记录。脚本、改写和模块规则不执行。不需要这个行为时，保持模块列表为空。
 
-推荐通过 `scripts/run.sh` 启动。它在子进程退出后清空抓包选择，包括子进程崩溃的情况。正常停止请按 Ctrl-C。强制杀死包装脚本和服务、机器断电或 controller 失联时，清理无法保证即时完成；可运行：
+</details>
+
+用 `scripts/run.sh` 启动，子进程退出时也会清空抓包选择；正常停止按 Ctrl-C。如果两个进程都被强杀、机器断电或 controller 失联，清理无法立即完成，可运行：
 
 ```sh
 bin/mihomo-capture -config config.yaml -clear-gateway
-# 停止服务后，重载 mihomo 自己的配置，移除附加节点与监听器：
+# 停止服务后，移除附加节点与出口监听器：
 bin/mihomo-capture -config config.yaml -remove-gateway
 ```
 
-服务不修改 mihomo 原始配置。mihomo 自己重启或重载后也会丢弃这些附加项。卸载证书请在系统信任库中删除 `Mihomo Capture CA`，然后删除本项目生成的 data 目录。这里保存了 CA 私钥和可能包含 cookie、密码的抓包内容，不要提交或分享它。
+mihomo 自己重启或重载原配置后也会移除这些附加项。卸载时，从系统信任库删除 `Mihomo Capture CA`，再删除生成的 data 目录。这里保存了 CA 私钥和可能敏感的抓包内容。
 
-## 开发
+## 开发与文档
 
-```sh
-go test -race ./...
-go vet ./...
-pnpm --dir web lint
-pnpm --dir web build
-# 原版 core 集成测试启动临时实例，不接触正在使用的 mihomo：
-MIHOMO_TEST_BINARY=/absolute/path/to/mihomo go test -race ./internal/gateway
-```
+`make install` 后运行 `make check`。独立 core 测试使用 `MIHOMO_TEST_BINARY=/absolute/path/to/mihomo make test`。`pnpm --dir web dev` 默认把 API 转发到 `127.0.0.1:19090`，可以用 `MIHOMO_CAPTURE_API` 修改。[只读 mock 预览](docs/demo/README.md)可复现截图，不需要运行 mihomo。
 
-`pnpm --dir web dev` 将 API 请求转发到 `127.0.0.1:19090`，可用 `MIHOMO_CAPTURE_API` 改地址。[接入原理与兼容限制](docs/mihomo.zh-CN.md)说明服务如何加载规则；[HTTP API](docs/api.zh-CN.md)可用于编写自己的调用程序。
+[HTTP API](docs/api.zh-CN.md) · [接入原理](docs/mihomo.zh-CN.md) · [排障](SUPPORT.md) · [贡献指南](CONTRIBUTING.md) · [更新记录](CHANGELOG.md) · [发布](docs/releasing.md) · [安全反馈](SECURITY.md) · [行为准则](CODE_OF_CONDUCT.md)
 
-MIT License。项目不分发 mihomo 二进制，mihomo 保留其自身许可证。
+Bug 和功能建议请提 [Issue](https://github.com/gtoxlili/mihomo-capture/issues)，英文或中文都可以；敏感问题请走安全反馈流程。
 
-## 参与项目
-
-欢迎使用英文或中文提交 Issue 和 PR。参与前请阅读[贡献指南](CONTRIBUTING.md)与[行为准则](CODE_OF_CONDUCT.md)。使用问题见[排障说明](SUPPORT.md)，敏感问题按[安全反馈流程](SECURITY.md)处理。
-
-常用命令为 `make install`、`make build` 和 `make check`。发布包可用时会出现在 [Releases](https://github.com/gtoxlili/mihomo-capture/releases)，包含程序、示例配置和启动脚本；运行前请核对 `SHA256SUMS`。当前 Dashboard 的界面语言为中文。
-
-版本变化见 [CHANGELOG.md](CHANGELOG.md)，维护者发布步骤见[发布说明](docs/releasing.md)。
+[MIT 许可证](LICENSE)。项目不捆绑 mihomo，发布包附带依赖的许可证说明。

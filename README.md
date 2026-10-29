@@ -1,21 +1,41 @@
 # Mihomo Capture
 
-[![CI](https://github.com/gtoxlili/mihomo-capture/actions/workflows/ci.yml/badge.svg)](https://github.com/gtoxlili/mihomo-capture/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+English | [简体中文](README.zh-CN.md) · [MIT license](LICENSE) · [CI checks](https://github.com/gtoxlili/mihomo-capture/actions/workflows/ci.yml)
 
-English | [简体中文](README.zh-CN.md)
+Inspect HTTP, HTTPS, and WebSocket traffic through the mihomo instance on your computer. Start with local capture, or select a LAN device when your computer is its gateway. Requests keep mihomo's original outbound policy.
 
-Inspect HTTP, HTTPS, and WebSocket traffic through the mihomo instance already running on your computer. Capture your own machine by default, or select a LAN device when that computer acts as a mihomo gateway.
+[![Dashboard showing captured requests, response headers, and a formatted JSON body](docs/assets/dashboard-http.png)](docs/assets/dashboard-http.png)
 
-Mihomo chooses the outbound policy using the original connection's source address, port, and rules before handing traffic to the capture service. Captured requests keep their original DIRECT, proxy, or proxy-group route. The bundled dashboard manages CA trust confirmations and capture sessions, displays requests, and exports complete requests as curl commands.
+*The real dashboard with synthetic traffic. All hosts and payloads are mock data; no private capture is shown. Click images to zoom. The dashboard currently uses Chinese.*
 
-macOS and Linux are supported, with stock mihomo v1.19.33 used in integration tests. Windows is untested. The dashboard currently uses Chinese; the documentation is available in English and Chinese.
+- Inspect request and response headers, bodies, status codes, and timing.
+- Follow WebSocket frames in both directions, including fragmentation and compression flags.
+- Filter records and export complete requests as curl commands.
 
-## Quick start
+<details>
+<summary>See WebSocket inspection</summary>
 
-### Build from source
+[![WebSocket connection with six synthetic frames and their directions, timestamps, and payloads](docs/assets/dashboard-websocket.png)](docs/assets/dashboard-websocket.png)
 
-Install Go 1.27.3+, Node.js 24+, and pnpm 12, then clone and build:
+</details>
+
+## How it works
+
+Mihomo picks a policy while it still has the original source IP and port. Capture inspects the connection, then returns it to a dedicated mihomo listener that uses the selected policy directly. The return connection never needs to choose a policy from the main rules again.
+
+![Request path: app to mihomo policy selection, capture, dedicated outbound listener, and the original outbound](docs/assets/routing.png)
+
+The service reads your final mihomo YAML and adds capture entries to its **runtime configuration**. It does not edit the original file. [Integration details and compatibility](docs/mihomo.md) explain the rule copies, reloads, and cleanup.
+
+## Get connected
+
+You need stock mihomo on the same computer, running in `rule` mode. macOS and Linux are supported; integration tests use mihomo v1.19.33. Windows is untested. Desktop clients must expose the core's controller and the final YAML they actually load.
+
+![Three setup steps: map controller, loaded YAML, and mihomo home to configuration; trust the CA; start local capture](docs/assets/setup.png)
+
+### 1. Build or extract a release
+
+For a source build, install Go 1.27.3+, Node.js 24+, and pnpm 12:
 
 ```sh
 git clone https://github.com/gtoxlili/mihomo-capture.git
@@ -25,30 +45,28 @@ make build
 cp config.example.yaml config.yaml
 ```
 
-`make build` builds the dashboard before embedding it in `bin/mihomo-capture`. Without Make, run:
+`make build` builds the dashboard and embeds it in `bin/mihomo-capture`. If Make is unavailable, run `pnpm --dir web install --frozen-lockfile`, `pnpm --dir web build`, then `go build -trimpath -o bin/mihomo-capture ./cmd/mihomo-capture`.
 
-```sh
-pnpm --dir web install --frozen-lockfile
-pnpm --dir web build
-go build -trimpath -o bin/mihomo-capture ./cmd/mihomo-capture
+When release archives are available on [Releases](https://github.com/gtoxlili/mihomo-capture/releases), extract one and copy the included configuration example. Verify it against the release's `SHA256SUMS` before running it.
+
+### 2. Point it at your mihomo
+
+Edit these fields in `config.yaml` to match your installation:
+
+```yaml
+mode: local
+controller_url: http://127.0.0.1:9090
+gateway_config: /absolute/path/to/mihomo/config.yaml
+gateway_state_dir: /absolute/path/to/mihomo/mihomo-capture
+# If mihomo has a secret, store it in a 0600 file:
+# controller_token_file: ./controller-token
 ```
 
-Release archives, when available on the [Releases page](https://github.com/gtoxlili/mihomo-capture/releases), contain the binary, configuration example, wrapper script, and documentation. Extract the archive, copy `config.example.yaml` to `config.yaml`, and continue below. Verify the archive against the release's `SHA256SUMS` before running it.
+Use exactly one of `controller_url` or `controller_socket`. `gateway_config` must be the **final, loaded YAML**, usually a desktop client's generated file rather than the subscription. Put `gateway_state_dir` inside mihomo's home and run both programs as the same user. Relative service paths resolve beside `config.yaml`. Keep the controller local.
 
-### Connect to mihomo
+Some routing configurations, including `load-balance` and `include-all` groups, cannot preserve their meaning through capture. The next step's `-check` reports incompatibilities before capture starts. See [the full restrictions](docs/mihomo.md#compatibility-restrictions).
 
-Edit `config.yaml` with your local mihomo settings:
-
-| Setting | Value |
-| --- | --- |
-| `controller_url` or `controller_socket` | Exactly one controller transport, such as `http://127.0.0.1:9090` or an absolute Unix socket path |
-| `controller_token_file` | An owner-only file containing mihomo's `secret`, if configured; use permissions `0600` |
-| `gateway_config` | The configuration file actually loaded by mihomo, including any desktop client's generated rules and proxies |
-| `gateway_state_dir` | A new writable directory inside mihomo's home directory for capture selection files |
-
-Relative paths resolve beside the service configuration file. Run the service and mihomo as the same user. Keep the controller local and connect to it directly. A subscription file is usually not the final configuration generated by a desktop client.
-
-Mihomo must use `rule` mode. Some configurations cannot preserve their routing behavior through capture, including `load-balance` and `include-all` groups. Run `-check` before starting; see [mihomo compatibility](docs/mihomo.md) for the full restrictions.
+### 3. Trust the CA and start capture
 
 ```sh
 bin/mihomo-capture -config config.yaml -init
@@ -56,60 +74,56 @@ bin/mihomo-capture -config config.yaml -check
 scripts/run.sh config.yaml
 ```
 
-Open <http://127.0.0.1:19090> and sign in with the token from `cat data/api-token`. Download the dashboard's `Mihomo Capture CA`, install it, and mark it trusted in your operating system. Confirm trust for the device named **本机** in the dashboard, then start capture. The service does not change your system proxy or trust store.
+Open <http://127.0.0.1:19090> and sign in with `cat data/api-token`. Install and fully trust the dashboard's `Mihomo Capture CA` on the device. In the dashboard, confirm trust for **本机**, then start capture.
 
-The application you want to inspect must already route through mihomo, for example through a system HTTP proxy or TUN. Connections that bypass mihomo will not appear. Local mode discovers loopback and active interface addresses. If mihomo reports another source address for TUN traffic, add it to `local_source_ips` and restart the service.
+The app must already use mihomo through its system proxy or TUN. Traffic that bypasses mihomo will not appear. Local mode discovers loopback and active interface addresses; add an extra TUN source reported by mihomo to `local_source_ips` if needed. The service does not install system certificates or change your system proxy.
 
-## Capture a LAN device
+## Local or LAN capture?
 
-Set `mode: gateway` and set `lan` to your IPv4 subnet, such as `192.168.1.0/24`. The target device must use this computer's mihomo to reach the network. Discovery uses the ARP table on macOS and requires `iproute2` on Linux. Devices are identified by MAC address, and one device can be captured at a time.
+| | Local capture, the default | LAN gateway capture |
+| --- | --- | --- |
+| Configuration | `mode: local` | `mode: gateway`, plus `lan: 192.168.1.0/24` |
+| Source | This computer's loopback and interface addresses | A selected IPv4 neighbor, identified by MAC |
+| Traffic must use | This computer's mihomo | This computer as the device's mihomo gateway |
+| CA trust | Install on this computer | Install on the selected device |
 
-For a phone that cannot reach the computer's loopback address, set `ca_listen` to the computer's LAN address and a free port. This optional listener serves only the public CA certificate. The dashboard and API can stay on `127.0.0.1`. Install the CA on the device, confirm trust in the dashboard, and start capture. This confirmation is a manual attestation; the service cannot inspect a remote trust store.
+Gateway discovery uses macOS ARP or Linux `iproute2`. To let a phone download the CA, set `ca_listen` to your computer's LAN address and a free port. That listener serves only the public certificate; the dashboard and API can stay on loopback. Trust confirmation is an operator statement, not a remote trust-store check. Only one device records at a time.
 
-## Captured data and limits
+## Limits and cleanup
 
-- HTTP requests and responses include headers, bodies, status codes, and duration. Complete requests can be exported as curl; truncated requests cannot be replayed.
-- WebSocket records include frame direction, opcode, fragmentation, and compression flags. Binary payloads use base64. gzip, deflate, and Brotli bodies also have a bounded decoded view.
-- The default retention is 24 hours, 5,000 records, and a total budget of 256 MiB. Bodies are capped at 1 MiB. Each WebSocket request retains up to 128 frames, each capped at 16 KiB. Limits truncate stored data while forwarding continues.
-- Stopping capture, switching devices, or clearing records invalidates old connections' write tickets. Capture does not resume automatically after a process restart.
+| Default | Limit |
+| --- | --- |
+| Retention | 24 hours / 5,000 records / 256 MiB total budget |
+| HTTP bodies | 1 MiB each; binary as base64, with bounded gzip/deflate/Brotli decoded views |
+| WebSocket frames | 128 per request, 16 KiB each |
 
-Certificate-pinned applications may refuse interception. HTTP/3 uses UDP and cannot be decrypted here. You can block UDP port 443 for the selected device to encourage TCP fallback; other UDP traffic on that port is also affected. Non-HTTP TCP and protocols outside HTTP interception are passed through.
+Stored content is truncated at the limit while forwarding continues. Incomplete requests do not get replay commands. Stopping, switching devices, or clearing records invalidates old connections' write tickets. Capture stays off after a process restart.
 
-The optional modules page reads MITM hostnames from Surge `.sgmodule` files. Registered hostnames remain decrypted for trusted devices after recording stops, without saving records. Module scripts, rewrites, and rules are never executed. Leave the module list empty if you do not need this behavior.
+<details>
+<summary>Protocol limits and optional module hostnames</summary>
 
-## Stop and uninstall
+Pinned certificates may prevent interception. HTTP/3 uses UDP and cannot be decrypted here. Blocking UDP 443 for the selected device can encourage TCP fallback, and affects other UDP on that port too. Non-HTTP TCP and protocols outside HTTP interception pass through.
 
-Use `scripts/run.sh` so capture selections are cleared when the child process exits, including crashes. Press Ctrl-C to stop normally. Cleanup cannot run immediately if both processes are killed, the machine loses power, or the controller is unavailable. Recover with:
+The optional module page reads MITM hostnames from Surge `.sgmodule` files. Those hosts remain decrypted for trusted devices after recording stops, without saving records. Scripts, rewrites, and module rules are not executed. Leave the module list empty if you do not need that behavior.
+
+</details>
+
+Use `scripts/run.sh` so a child-process exit also clears capture selections. Stop normally with Ctrl-C. If both processes are killed, power is lost, or the controller is unavailable, cleanup cannot happen immediately. Recover with:
 
 ```sh
 bin/mihomo-capture -config config.yaml -clear-gateway
-# After stopping the service, remove its extra nodes and listener:
+# After stopping the service, remove capture nodes and the outbound listener:
 bin/mihomo-capture -config config.yaml -remove-gateway
 ```
 
-The original mihomo configuration file is never modified. Restarting mihomo or reloading its own configuration also removes the added entries. To uninstall the CA, delete `Mihomo Capture CA` from your system trust store, then remove the generated data directory. That directory contains a CA private key and captures that may include cookies or passwords. Keep it private.
+Restarting mihomo or reloading its own configuration also removes the entries. To uninstall, remove `Mihomo Capture CA` from system trust stores, then remove the generated data directory. It contains the CA private key and potentially sensitive captures.
 
-## Development and contributing
+## Development and documentation
 
-```sh
-make check
-# Run stock-core integration tests against a separate temporary instance:
-MIHOMO_TEST_BINARY=/absolute/path/to/mihomo make test
-```
+Run `make check` after `make install`. Use `MIHOMO_TEST_BINARY=/absolute/path/to/mihomo make test` for isolated stock-core tests. `pnpm --dir web dev` forwards API calls to `127.0.0.1:19090`, configurable with `MIHOMO_CAPTURE_API`. A [read-only mock preview](docs/demo/README.md) reproduces the screenshots without a running mihomo.
 
-`pnpm --dir web dev` forwards API calls to `127.0.0.1:19090`; override it with `MIHOMO_CAPTURE_API`.
+[HTTP API](docs/api.md) · [Integration](docs/mihomo.md) · [Troubleshooting](SUPPORT.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Releases](docs/releasing.md) · [Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
-Read the [contributing guide](CONTRIBUTING.md) before opening a pull request. [Report a bug](https://github.com/gtoxlili/mihomo-capture/issues/new?template=bug_report.yml), request a feature through [Issues](https://github.com/gtoxlili/mihomo-capture/issues), or follow the [security policy](SECURITY.md) for sensitive reports. English and Chinese are both welcome.
+Bug reports and feature requests belong in [Issues](https://github.com/gtoxlili/mihomo-capture/issues). English and Chinese are welcome; sensitive reports follow the security policy.
 
-## Documentation
-
-- [HTTP API](docs/api.md)
-- [mihomo integration and compatibility](docs/mihomo.md)
-- [Support and troubleshooting](SUPPORT.md)
-- [Changelog](CHANGELOG.md)
-- [Release process](docs/releasing.md)
-- [Code of conduct](CODE_OF_CONDUCT.md)
-
-## License
-
-[MIT](LICENSE). Mihomo is a separate dependency with its own license and is not bundled. Go and npm dependencies retain their own licenses; release archives include dependency license notices.
+[MIT](LICENSE). Mihomo is a separate dependency and is not bundled. Release archives include dependency license notices.
