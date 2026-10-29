@@ -14,3 +14,12 @@ __pycache__/
 .DS_Store
 
 /dist/
+
+# Local identities and environment overrides.
+*.pem
+*.p8
+*.crt
+*.cer
+.env.*
+!.env.example
+/secrets/
