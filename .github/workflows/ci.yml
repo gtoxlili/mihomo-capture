@@ -1,13 +1,21 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   check:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-15-intel]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -15,13 +23,13 @@ jobs:
           go-version-file: go.mod
       - uses: pnpm/action-setup@v4
         with:
-          version: 12
+          package_json_file: web/package.json
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
-      - run: pnpm --dir web install --frozen-lockfile
+      - run: make install
       - run: pnpm --dir web lint
       - run: pnpm --dir web build
       - name: Fetch stock mihomo for integration tests
@@ -36,6 +44,5 @@ jobs:
           gzip -d "$RUNNER_TEMP/$asset"
           chmod +x "$RUNNER_TEMP/${asset%.gz}"
           echo "MIHOMO_TEST_BINARY=$RUNNER_TEMP/${asset%.gz}" >> "$GITHUB_ENV"
-      - run: go test -race ./...
-      - run: go vet ./...
-      - run: go build -o bin/mihomo-capture ./cmd/mihomo-capture
+      - run: make fmt-check test vet
+      - run: go build -trimpath -o bin/mihomo-capture ./cmd/mihomo-capture

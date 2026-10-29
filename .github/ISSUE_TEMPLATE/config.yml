@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Setup and troubleshooting
+    url: https://github.com/gtoxlili/mihomo-capture/blob/main/SUPPORT.md
+    about: Check common setup problems before opening an issue.
+  - name: Security reporting
+    url: https://github.com/gtoxlili/mihomo-capture/blob/main/SECURITY.md
+    about: Follow this policy for reports that contain sensitive details.

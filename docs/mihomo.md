@@ -1,27 +1,29 @@
-# mihomo 接入
+# mihomo integration
 
-Mihomo Capture 与 mihomo 运行在同一电脑，读取它实际使用的 YAML，并通过 controller 的 `PUT /configs` 加载一份添加了抓包节点和监听器的运行配置。原 YAML 不会被写入。文件规则集位于 `gateway_state_dir`，mihomo 必须有权读取它们，这个目录应放在 mihomo home 下。
+[简体中文](mihomo.zh-CN.md)
 
-服务添加 `mihomo-capture-` 前缀的代理节点、规则集和子规则，以及一个只监听回环的 HTTP 出口。capture 通道接收选中设备的 TCP；daily 通道只处理已注册模块中的 hostname。两个通道分别复制原始规则和 sub-rules。mihomo 在连接来源信息还完整时选中原策略，转发到服务的 CONNECT 头携带策略 ID。服务解密和记录后通过出口监听器回到该策略，出口使用自己的子规则，不再匹配主规则。这也允许捕获来自 `127.0.0.1` 的本机连接而不循环进入抓包服务。
+Mihomo Capture runs on the same computer as mihomo. It reads the actual loaded YAML and uses the controller's `PUT /configs` endpoint to load a copy with capture nodes and an outbound listener. The source file is never written. File rule providers live in `gateway_state_dir`, which must be readable by mihomo and should be inside its home directory.
 
-选择变化只更新文件规则集。首次非空选择时加载附加配置，之后每五秒检查一次；如果 mihomo 自己重载过，下一次同步会基于原文件重新安装。因此修改 mihomo 配置后，应先按原有方式让 mihomo 重载。不要只改文件却保留另一份运行配置。
+The service adds proxies, rule providers, and sub-rules prefixed with `mihomo-capture-`, plus an HTTP outbound listener bound to loopback. The capture lane receives TCP from the selected device. The daily lane handles registered module hostnames for trusted devices. Each lane copies the original rules and sub-rules. Mihomo selects a policy while the connection's source metadata is still available, then sends its policy ID in the proxy CONNECT headers. After interception, the service re-enters mihomo through the outbound listener, whose own sub-rules select that policy without evaluating the main rules again. This also lets loopback traffic be captured without repeatedly entering the service.
 
-## 配置限制
+Selection changes update only the provider files. The first nonempty selection loads the extra configuration. The service checks every five seconds and reinstalls it if mihomo has reloaded its own configuration. After editing mihomo's source file, reload it normally so the running configuration and file agree.
 
-mihomo 必须始终使用 `rule` 模式。抓包期间不要切换到 `global` 或 `direct`，也不要在客户端里手选 `mihomo-capture-` 前缀的内部节点。动态切换模式可能绕过出口子规则并形成回环；先停止服务并运行 `-remove-gateway`，再切模式。
+## Compatibility restrictions
 
-服务拒绝无法保持分流含义的配置，包括 `PASS`、`PASS-RULE`，按来源选成员的 `load-balance` 组，select、fallback、url-test 以外的策略组，以及 `include-all` / `include-all-proxies`。这些选项可能把内部抓包节点纳入普通出网策略。应把组成员明确列出。已有 `mihomo-capture-` 名称、无规则、未知策略和出口端口冲突也会拒绝。先用 `-check` 检查兼容性。
+Mihomo must remain in `rule` mode. Do not switch to `global` or `direct` with capture entries installed, and do not select internal `mihomo-capture-` nodes in a desktop client. A mode switch can bypass outbound sub-rules and cause routing loops. Stop the service and run `-remove-gateway` before changing modes.
 
-这里需要的是 core 的 controller 和最终配置。项目不会读取某个桌面客户端的数据库，也不会自动猜测订阅转换和配置合并结果。会自动覆盖 core 配置的客户端可能与服务反复重载，需要关闭该行为或单独运行 core。
+The service rejects configurations it cannot preserve, including `PASS`, `PASS-RULE`, source-dependent `load-balance` groups, group types other than select/fallback/url-test, and `include-all` or `include-all-proxies`. Explicit group members avoid accidentally including capture nodes as ordinary outbounds. Existing names with the reserved prefix, missing rules, unknown policies, and conflicting outbound ports are also rejected. Use `-check` first.
 
-## 生命周期
+The required inputs are the core's controller and final configuration. The service does not read a desktop client's database or infer its subscription conversion and merge behavior. Clients that automatically replace the running core configuration may conflict with capture reloads. Disable that behavior or use a standalone core.
 
-每次启动先清空两个选择集。停止和撤销信任使在途记录凭证失效，已有 TCP 连接可以继续到自然结束，停止录制不会主动断开它们。关闭服务则会断开服务持有的连接。清空记录不会停止抓包，新连接仍可产生新记录。
+## Lifecycle
 
-`-clear-gateway` 只清空选择，`-remove-gateway` 让 core 重载原配置并删除选择文件。后者应在服务退出后运行，否则下一轮同步会重新安装。
+Startup clears both selections. Stopping capture or revoking trust invalidates in-flight record tickets. Existing TCP connections may continue naturally; stopping recording does not actively disconnect them. Stopping the service disconnects connections it owns. Clearing records leaves capture active, so new connections can still produce records.
 
-网关模式只发现 IPv4 邻居，DHCP 重分配到下一次五秒刷新之间可能存在短暂的旧 IP 绑定。设备使用随机 MAC 后会出现为新设备，旧信任不会继承。
+`-clear-gateway` empties the selections. `-remove-gateway` asks the core to reload its original configuration and deletes selection files. Stop the service before removal, or the next synchronization can reinstall the entries.
 
-## 测试范围
+Gateway discovery uses IPv4 neighbors. DHCP reassignment can leave a stale IP binding until the next five-second refresh. Randomizing a MAC address creates a new device without inherited trust.
 
-原版 core 测试覆盖来源地址与端口选策略、REJECT、回环来源只经过服务一次、未选中来源、hostname 排除、server-first、半关闭、UDP 端口阻断，以及重载、清空和移除。测试不需要 TUN 或管理员权限，不验证真实应用的证书信任、桌面客户端配置合并或系统路由。
+## Test coverage
+
+Stock-core tests cover source-address and source-port routing, REJECT, loopback traffic passing through capture once, unselected sources, hostname exclusions, server-first protocols, half-close, UDP port blocking, reload, clear, and removal. They need neither TUN nor administrator privileges. Real application trust, desktop-client configuration merges, and system routing require separate manual verification.

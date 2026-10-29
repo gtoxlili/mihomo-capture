@@ -1,25 +1,27 @@
 # HTTP API
 
-默认地址为 `http://127.0.0.1:19090`。`/v1` 下所有请求都需要 `Authorization: Bearer <API token>`，body 使用 JSON。令牌由 `-init` 生成，位置由 `api_token_file` 配置。`/ca.crt` 和 `/ca.pem` 不需要认证，只返回公开证书。
+[简体中文](api.zh-CN.md)
 
-错误格式为 `{"error":{"code":"invalid_request","message":"..."}}`。无认证返回 401，无资源返回 404，状态冲突返回 409，controller 不可用通常返回 503。
+The default address is `http://127.0.0.1:19090`. Every `/v1` request requires `Authorization: Bearer <API token>`. Send JSON request bodies. `-init` creates the token at `api_token_file`. Public `/ca.crt` and `/ca.pem` endpoints serve only the CA certificate without authentication.
 
-| 方法与路径 | 用途与参数 |
+Errors use `{"error":{"code":"invalid_request","message":"..."}}`. Missing authentication returns 401, missing resources 404, state conflicts 409, and controller failures usually 503.
+
+| Method and path | Behavior and input |
 | --- | --- |
-| `GET /v1/status` | 服务状态、CA 指纹、当前抓包、mihomo 版本和同步错误 |
-| `GET /v1/devices` | 设备列表。本机 ID 为 `local`，网关模式 ID 为 MAC |
-| `POST /v1/devices/refresh` | 立即刷新地址和选择 |
-| `PUT /v1/devices/{id}` | 改名称，body 为 `{"label":"我的电脑"}` |
-| `PUT /v1/devices/{id}/trust` | 确认或撤销信任，body 为 `{"trusted":true,"trust_evidence":"已安装并完全信任当前 CA"}` |
-| `PUT /v1/capture` | 开始，body 为 `{"device_id":"local","block_udp_ports":[]}`。阻断 QUIC 可用 `[443]` |
-| `DELETE /v1/capture` | 停止录制 |
-| `GET /v1/records` | 摘要列表，返回 `items` 与 `next` |
-| `GET /v1/records/{id}` | 完整请求、响应、帧与可用的 curl |
-| `DELETE /v1/records` | 清空所有记录，并使旧连接不能继续写入 |
-| `GET /v1/modules` | 模块、合并后的 hostname 和 `execution_enabled:false` |
-| `POST /v1/modules` | 注册 hostname，body 为 `{"source":"https://example.com/a.sgmodule","arguments":{}}`；source 也可为服务电脑上的绝对文件路径 |
-| `DELETE /v1/modules/{id}` | 移除模块 |
+| `GET /v1/status` | Service status, CA fingerprint, active capture, mihomo version, and synchronization errors |
+| `GET /v1/devices` | Device list; the local device ID is `local`, and gateway IDs are MAC addresses |
+| `POST /v1/devices/refresh` | Refresh source addresses and selection immediately |
+| `PUT /v1/devices/{id}` | Rename with `{"label":"My computer"}` |
+| `PUT /v1/devices/{id}/trust` | Confirm or revoke trust with `{"trusted":true,"trust_evidence":"Installed and fully trusted the current CA"}` |
+| `PUT /v1/capture` | Start with `{"device_id":"local","block_udp_ports":[]}`; use `[443]` to block UDP 443 for TCP fallback |
+| `DELETE /v1/capture` | Stop recording |
+| `GET /v1/records` | Record summaries, returning `items` and `next` |
+| `GET /v1/records/{id}` | Complete request, response, frames, and curl command when available |
+| `DELETE /v1/records` | Clear all records and invalidate old connections' write tickets |
+| `GET /v1/modules` | Modules, merged hostnames, and `execution_enabled:false` |
+| `POST /v1/modules` | Register hostnames with `{"source":"https://example.com/a.sgmodule","arguments":{}}`; source can also be an absolute file path on the service host |
+| `DELETE /v1/modules/{id}` | Remove a module |
 
-记录查询支持 `host`、`path`、`method`、`status`、`q`、`device`、`limit` 和 `before`。limit 为 1–200，默认 50；用响应的 next 作为下一页 before。列表不带 body，详情中的 body 包含 encoding、data、size、truncated，必要时带 decoded。encoding 为 utf8 或 base64；重放使用原始字节。
+Record filters are `host`, `path`, `method`, `status`, `q`, `device`, `limit`, and `before`. Limit accepts 1–200 and defaults to 50. Pass `next` from a response as the next page's `before`. Summaries omit bodies. Detail bodies include `encoding`, `data`, `size`, and `truncated`, with `decoded` where applicable. Encoding is `utf8` or `base64`; replay uses the original wire bytes.
 
-同一时刻只能录制一台受信设备。信任确认绑定当前 CA 的指纹，更换 CA 后需要重新确认。API token 可以读取所有记录、管理设备和加载模块，应与 CA 私钥一起妥善保管。
+Only one trusted device can record at a time. A trust confirmation is bound to the current CA fingerprint, and changing the CA requires confirmation again. The API token can read all records, manage devices, and load modules. Keep it private along with the CA key.
