@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible problem. English and Chinese are welcome.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "For sensitive reports, follow SECURITY.md. Never attach tokens, CA private keys, or raw capture directories."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, service release or commit, mihomo version, local or gateway mode, and desktop client if used.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal synthetic example and the expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Relevant error, -check output, or configuration excerpt. Remove private addresses and credentials.
+      render: text
