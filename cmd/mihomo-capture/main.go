@@ -14,10 +14,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gtoxlili/mihomo-capture/internal/app"
+	"github.com/gtoxlili/mihomo-capture/internal/gateway"
+	"github.com/gtoxlili/mihomo-capture/web"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"mihomo-capture/internal/app"
-	"mihomo-capture/internal/gateway"
-	"mihomo-capture/web"
 )
 
 func main() {

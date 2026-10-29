@@ -1,4 +1,4 @@
-module mihomo-capture
+module github.com/gtoxlili/mihomo-capture
 
 go 1.27.3
 
