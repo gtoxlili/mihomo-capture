@@ -7,7 +7,7 @@ ignore ./web/node_modules
 
 require (
 	github.com/andybalholm/brotli v1.2.7
-	github.com/coder/websocket v1.8.14
+	github.com/coder/websocket v1.8.15
 	github.com/dlclark/regexp2/v2 v2.11.0
 	github.com/dop251/goja v0.0.0-20261029153331-f81816846776
 	github.com/elazarl/goproxy v1.9.2
