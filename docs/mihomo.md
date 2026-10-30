@@ -24,7 +24,7 @@ The required inputs are the core's controller and final configuration. The servi
 
 Startup clears both selections. Stopping capture or revoking trust invalidates in-flight record tickets. Existing TCP connections may continue naturally; stopping recording does not actively disconnect them. Stopping the service disconnects connections it owns. Clearing records leaves capture active, so new connections can still produce records.
 
-`-clear-gateway` empties the selections. `-remove-gateway` asks the core to reload its original configuration and deletes selection files. Stop the service before removal, or the next synchronization can reinstall the entries.
+`-clear-gateway` empties the selections. `-remove-gateway` asks the core to reload its original configuration and deletes selection files. Stop the service before removal, or the next synchronization can reinstall the entries. If the service hangs while its process is still running, mihomo keeps handing the selected traffic to it; restart the service.
 
 Gateway discovery uses IPv4 neighbors. DHCP reassignment can leave a stale IP binding until the next five-second refresh. Randomizing a MAC address creates a new device without inherited trust.
 
