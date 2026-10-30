@@ -63,7 +63,7 @@ Body rewrites and scripts see bodies after gzip, deflate or br decoding; a chang
 
 ### Scripts
 
-Scripts are JavaScript run by goja, with ECMAScript 2020 and later syntax and no browser or Node.js APIs. A script ends by calling `$done`; later calls are ignored. Throwing, running past `timeout`, or ending without `$done` once nothing is pending leaves the message unchanged and adds a log entry. At most four scripts, or one per CPU when more, run at once; later ones wait within their own timeout.
+Scripts are JavaScript run by goja, with ECMAScript 2020 and later syntax. Of the browser and Node.js APIs only `TextEncoder` and `TextDecoder` are present. A script ends by calling `$done`; later calls are ignored. Throwing, running past `timeout`, or ending without `$done` once nothing is pending leaves the message unchanged and adds a log entry. At most four scripts, or one per CPU when more, run at once; later ones wait within their own timeout.
 
 | Global | Content |
 | --- | --- |
@@ -77,6 +77,7 @@ Scripts are JavaScript run by goja, with ECMAScript 2020 and later syntax and no
 | `$utils.ungzip(bytes)` | A `Uint8Array`, or `null` when the input is not gzip |
 | `console` | `log`, `info`, `debug`, `warn` and `error` add log entries; objects print as JSON |
 | `setTimeout`, `clearTimeout` | Up to 64 pending timers, cancelled when the script ends |
+| `TextEncoder`, `TextDecoder` | As the WHATWG Encoding Standard defines them. `TextEncoder` writes UTF-8 through `encode` and `encodeInto`. `TextDecoder` takes the standard's encoding labels, such as `gbk`, `big5`, `shift_jis` or `utf-16le`, with `fatal`, `ignoreBOM` and `decode(input, {stream})` |
 
 Header objects answer to any letter case. Repeated header lines appear joined with `, `, and a header returned with the value it was given keeps its original lines, so an untouched `Set-Cookie` survives. With `full_header_mode`, headers are an array of `{field, value}` objects instead, one per line. Request headers include `Host`.
 

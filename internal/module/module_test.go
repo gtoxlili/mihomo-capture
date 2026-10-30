@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -401,4 +402,67 @@ func TestScriptAPIs(t *testing.T) {
 		t.Fatal("store did not survive a restart")
 	}
 	_ = context.Background
+}
+
+// upstream: WHATWG Encoding Standard — TextEncoder and TextDecoder, including
+// encodeInto, BOM handling, streaming, replacement, fatal and legacy labels.
+func TestTextEncoderDecoder(t *testing.T) {
+	e := engine(t)
+	m := compile(t, Definition{Scripts: []Script{{Name: "codec", Pattern: ".", Code: `
+		const u8 = (...b) => new Uint8Array(b)
+		const hex = (a) => Array.from(a, (x) => x.toString(16).padStart(2, "0")).join(" ")
+		const threw = (f) => { try { f(); return "none" } catch (err) { return err.constructor.name } }
+		const enc = new TextEncoder()
+		const dest = new Uint8Array(5)
+		const into = enc.encodeInto("a😀b", dest)
+		const s = new TextDecoder()
+		const r = {
+			encoding: enc.encoding,
+			encode: hex(enc.encode("é😀")),
+			lone: hex(enc.encode("\ud800")),
+			into: into.read + "/" + into.written + " " + hex(dest),
+			bom: new TextDecoder().decode(u8(0xef, 0xbb, 0xbf, 0x68, 0x69)),
+			keepBOM: new TextDecoder("utf-8", { ignoreBOM: true }).decode(u8(0xef, 0xbb, 0xbf, 0x68)).length,
+			stream: s.decode(u8(0xe2, 0x82), { stream: true }) + "|" + s.decode(u8(0xac)),
+			replaced: new TextDecoder().decode(u8(0x61, 0xe2, 0x82, 0x62)),
+			fatal: threw(() => new TextDecoder("utf-8", { fatal: true }).decode(u8(0x61, 0xff))),
+			fatalOK: new TextDecoder("utf-8", { fatal: true }).decode(u8(0x61)),
+			gbk: new TextDecoder(" GBK ").decode(u8(0xc4, 0xe3, 0xba, 0xc3)),
+			utf16: new TextDecoder("utf-16").encoding + " " + new TextDecoder("utf-16").decode(u8(0xff, 0xfe, 0x41, 0x00)),
+			unknown: threw(() => new TextDecoder("no-such-encoding")),
+			notBuffer: threw(() => new TextDecoder().decode("text")),
+			buffers: new TextDecoder().decode(u8(0x68, 0x69).buffer) + new TextDecoder().decode(new DataView(u8(0x78, 0x68, 0x69).buffer, 1)),
+			tag: Object.prototype.toString.call(new TextDecoder()) + " " + (new TextEncoder() instanceof TextEncoder),
+		}
+		$done({ response: { body: JSON.stringify(r) } })`}}})
+	res := e.Request(exchange(m), httptest.NewRequest("GET", "https://a.example/", nil))
+	if res == nil {
+		t.Fatalf("no response: %+v", e.Logs("m1"))
+	}
+	var got map[string]any
+	if err := json.Unmarshal([]byte(read(t, res.Body)), &got); err != nil {
+		t.Fatal(err)
+	}
+	for k, want := range map[string]any{
+		"encoding":  "utf-8",
+		"encode":    "c3 a9 f0 9f 98 80",
+		"lone":      "ef bf bd",
+		"into":      "3/5 61 f0 9f 98 80",
+		"bom":       "hi",
+		"keepBOM":   float64(2),
+		"stream":    "|€",
+		"replaced":  "a�b",
+		"fatal":     "TypeError",
+		"fatalOK":   "a",
+		"gbk":       "你好",
+		"utf16":     "utf-16le A",
+		"unknown":   "RangeError",
+		"notBuffer": "TypeError",
+		"buffers":   "hihi",
+		"tag":       "[object TextDecoder] true",
+	} {
+		if got[k] != want {
+			t.Errorf("%s: got %#v, want %#v", k, got[k], want)
+		}
+	}
 }

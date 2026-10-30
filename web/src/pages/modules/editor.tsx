@@ -315,7 +315,7 @@ function Editor({ id, initial }: { id?: string; initial: ModuleDefinition }) {
 
       <Section
         title="脚本"
-        hint="http-request 脚本处理请求，http-response 脚本处理响应，可用 $request、$response、$done、$argument、$persistentStore、$httpClient、$notification、$utils.ungzip、console、setTimeout，详见 API 文档。每个请求和每个响应只运行第一个匹配的脚本。出错、超时或没有调用 $done 时原样放行，原因记在日志里。"
+        hint="http-request 脚本处理请求，http-response 脚本处理响应，可用 $request、$response、$done、$argument、$persistentStore、$httpClient、$notification、$utils.ungzip、console、setTimeout、TextEncoder、TextDecoder，详见 API 文档。每个请求和每个响应只运行第一个匹配的脚本。出错、超时或没有调用 $done 时原样放行，原因记在日志里。"
         onAdd={() =>
           scripts.add({
             name: `script-${d.scripts.length + 1}`,

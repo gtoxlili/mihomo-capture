@@ -239,6 +239,9 @@ func (r *run) globals(in call) error {
 	set("$script", map[string]any{"name": r.s.Name, "type": r.s.Type, "startTime": float64(time.Now().UnixMilli()) / 1000, "sessionID": r.session, "binaryBodyMode": r.s.BinaryBodyMode})
 	system := map[string]string{"darwin": "macOS", "linux": "Linux", "windows": "Windows"}[runtime.GOOS]
 	set("$environment", map[string]any{"system": system, "language": "en"})
+	if err := r.installTextCodec(); err != nil {
+		return err
+	}
 	set("console", r.console())
 	set("setTimeout", r.setTimeout)
 	set("clearTimeout", r.clearTimeout)
@@ -298,21 +301,8 @@ func (r *run) bytesOf(v goja.Value) ([]byte, bool) {
 	if v == nil || goja.IsUndefined(v) || goja.IsNull(v) {
 		return nil, false
 	}
-	switch x := v.Export().(type) {
-	case string:
-		return []byte(x), true
-	case []byte:
-		return bytes.Clone(x), true
-	case goja.ArrayBuffer:
-		return bytes.Clone(x.Bytes()), true
-	}
-	if o, ok := v.(*goja.Object); ok {
-		if buf, ok := o.Get("buffer").Export().(goja.ArrayBuffer); ok {
-			off, n := o.Get("byteOffset").ToInteger(), o.Get("byteLength").ToInteger()
-			if b := buf.Bytes(); off >= 0 && n >= 0 && off+n <= int64(len(b)) {
-				return bytes.Clone(b[off : off+n]), true
-			}
-		}
+	if b, ok := bufferBytes(v); ok {
+		return bytes.Clone(b), true
 	}
 	return []byte(v.String()), true
 }

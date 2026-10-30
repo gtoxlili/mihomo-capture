@@ -63,7 +63,7 @@ Body 改写和脚本看到的是按 gzip、deflate、br 解压后的正文；正
 
 ### 脚本
 
-脚本是 JavaScript，由 goja 执行，支持 ECMAScript 2020 及以后的语法，没有浏览器或 Node.js 的 API。脚本调用 `$done` 结束，之后的调用被忽略。抛出异常、超过 `timeout`，或者在没有待办回调时结束而没调用 `$done`，消息原样放行并记一条日志。同时最多运行 4 个脚本，CPU 更多时每个 CPU 一个；其余的在各自的超时内排队。
+脚本是 JavaScript，由 goja 执行，支持 ECMAScript 2020 及以后的语法。浏览器和 Node.js 的 API 里只提供 `TextEncoder` 与 `TextDecoder`。脚本调用 `$done` 结束，之后的调用被忽略。抛出异常、超过 `timeout`，或者在没有待办回调时结束而没调用 `$done`，消息原样放行并记一条日志。同时最多运行 4 个脚本，CPU 更多时每个 CPU 一个；其余的在各自的超时内排队。
 
 | 全局对象 | 内容 |
 | --- | --- |
@@ -77,6 +77,7 @@ Body 改写和脚本看到的是按 gzip、deflate、br 解压后的正文；正
 | `$utils.ungzip(bytes)` | 返回 `Uint8Array`，输入不是 gzip 时返回 `null` |
 | `console` | `log`、`info`、`debug`、`warn`、`error` 记日志，对象按 JSON 打印 |
 | `setTimeout`、`clearTimeout` | 最多 64 个待触发的定时器，脚本结束时全部取消 |
+| `TextEncoder`、`TextDecoder` | 与 WHATWG Encoding 标准一致。`TextEncoder` 用 `encode` 和 `encodeInto` 输出 UTF-8。`TextDecoder` 接受标准里的编码标签，如 `gbk`、`big5`、`shift_jis`、`utf-16le`，支持 `fatal`、`ignoreBOM` 和 `decode(input, {stream})` |
 
 头对象按任意大小写都能取到。同名的多行头以 `, ` 连接成一个值；原样返回的头保留原来的各行，所以没动过的 `Set-Cookie` 不受影响。`full_header_mode` 时头改为 `{field, value}` 对象的数组，每行一个。请求头里包含 `Host`。
 
