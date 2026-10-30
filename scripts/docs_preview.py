@@ -40,7 +40,7 @@ class Preview(http.server.SimpleHTTPRequestHandler):
         if path == '/v1/devices':
             return self.send_json({'items': FIXTURE['devices']})
         if path == '/v1/modules':
-            return self.send_json({'items': [], 'hostnames': []})
+            return self.send_json({'items': []})
         if path == '/v1/records':
             items = FIXTURE['records']
             query = urllib.parse.parse_qs(url.query)

@@ -8,7 +8,11 @@ Confirm the application already uses mihomo through a system proxy or TUN, the c
 
 ## HTTPS fails
 
-Install the service's current CA and fully trust it on the device. A dashboard trust confirmation alone does not install a certificate. Some applications pin certificates or use their own trust store and may refuse interception. Remove optional registered modules if their hostnames should stop being decrypted after recording ends.
+Install the service's current CA and fully trust it on the device. A dashboard trust confirmation alone does not install a certificate. Some applications pin certificates or use their own trust store and may refuse interception. Outside a capture, only the hostnames of modules enabled for the device are decrypted; disable a module, or take the device off it, to stop that.
+
+## A module does not act
+
+The device must be trusted, online, and listed on the enabled module, and the request's host must match one of the module's hostnames. Device changes apply to connections opened afterwards, so reconnect the application. The module's log on the dashboard, or `GET /v1/modules/{id}/logs`, names rules that were skipped and scripts that failed, timed out or never called `$done`.
 
 ## Configuration check fails
 

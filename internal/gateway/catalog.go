@@ -14,25 +14,57 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Two lanes lead into the capture service. The capture lane carries the
-// selected device; the daily lane carries module hostnames of trusted devices.
+// Lanes lead into the capture service. The capture lane carries the selected
+// device; each daily lane carries the trusted devices that share one set of
+// active modules, limited to those modules' hostnames.
 const (
 	LaneHeader   = "X-Capture-Lane"
 	PolicyHeader = "X-Capture-Policy"
 	LaneCapture  = "capture"
-	LaneDaily    = "daily"
 	// ProxyUser authenticates mihomo proxy nodes to the capture service.
 	ProxyUser = "capture"
+	// MaxDailyLanes bounds the distinct module sets active at once.
+	MaxDailyLanes = 64
+	minDailyLanes = 2
+	dailyPrefix   = "daily-"
 )
 
 const prefix = "mihomo-capture-"
 
-// Capture precedes daily, so the selected device never takes the daily lane.
-var lanes = []string{LaneCapture, LaneDaily}
+// laneNames lists a catalog's lanes in rule order. Capture precedes the daily
+// lanes, so the selected device never takes one.
+func laneNames(daily int) []string {
+	out := []string{LaneCapture}
+	for i := range daily {
+		out = append(out, dailyLane(i))
+	}
+	return out
+}
+
+func dailyLane(slot int) string { return dailyPrefix + strconv.Itoa(slot) }
+
+// DailySlot reads the slot of a daily lane named in the lane header.
+func DailySlot(lane string) (int, bool) {
+	n, ok := strings.CutPrefix(lane, dailyPrefix)
+	if !ok || n == "" || len(n) > 2 || n[0] == '0' && n != "0" {
+		return 0, false
+	}
+	slot, err := strconv.Atoi(n)
+	return slot, err == nil && slot >= 0 && slot < MaxDailyLanes
+}
+
+func isLane(lane string) bool {
+	_, daily := DailySlot(lane)
+	return lane == LaneCapture || daily
+}
 
 func laneName(lane string) string { return prefix + lane }
 
 const egressName = prefix + "egress"
+
+// PolicyID is the identifier of a policy in the catalog's proxy nodes and
+// egress users.
+func PolicyID(policy string) string { return shortID(policy) }
 
 func shortID(value string) string {
 	h := sha256.Sum256([]byte(value))
@@ -44,6 +76,7 @@ type catalogOptions struct {
 	EgressAddress string // mihomo listener the service dials back through
 	Token         string
 	StateDir      string // selector files; mihomo only reads paths under its home
+	Daily         int    // number of daily lanes
 }
 
 // compile returns the original configuration plus the capture catalog. The
@@ -179,7 +212,7 @@ func compile(base []byte, o catalogOptions) ([]byte, error) {
 	providers := mapping(root, "rule-providers")
 	subs := mapping(root, "sub-rules")
 	var entries []*yaml.Node
-	for _, lane := range lanes {
+	for _, lane := range laneNames(o.Daily) {
 		node := func(policy string) string { return prefix + lane + "-" + shortID(policy) }
 		copied := func(sub string) string { return prefix + lane + "-sub-" + shortID(sub) }
 		for _, policy := range policies {

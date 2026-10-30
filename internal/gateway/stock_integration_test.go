@@ -148,13 +148,15 @@ func TestStockCoreLanes(t *testing.T) {
 	lanes = lanes[:2]
 	mu.Unlock()
 
-	daily := Selection{DailyIPs: []string{"::1"}, Hostnames: []string{"*.invalid", "-plain.invalid"}}
+	// A module's hostname list decides by its first matching entry, so the
+	// exclusion before the wildcard keeps plain.invalid out of the lane.
+	daily := Selection{Daily: []DailyLane{{IPs: []string{"::1"}, Hostnames: [][]string{{"-plain.invalid", "*.invalid"}}}}}
 	if err = c.Select(ctx, daily); err != nil {
 		t.Fatal(err)
 	}
 	assertEcho(t, selected(0, "routed.invalid"), true)
 	assertEcho(t, selected(0, "plain.invalid"), true)
-	seen("capture", "capture", "daily")
+	seen("capture", "capture", "daily-0")
 
 	// The gateway reloading its own file stands in for its restart.
 	if err = c.call(ctx, "PUT", "/configs", map[string]string{}, nil); err != nil {
@@ -164,19 +166,19 @@ func TestStockCoreLanes(t *testing.T) {
 		t.Fatalf("reloaded gateway still has lanes: %+v %v", status, err)
 	}
 	assertEcho(t, selected(0, "routed.invalid"), true)
-	seen("capture", "capture", "daily")
+	seen("capture", "capture", "daily-0")
 	if err = c.Select(ctx, daily); err != nil {
 		t.Fatal(err)
 	}
 	assertEcho(t, selected(0, "routed.invalid"), true)
-	seen("capture", "capture", "daily", "daily")
+	seen("capture", "capture", "daily-0", "daily-0")
 
 	// The LaunchAgent wrapper runs Clear after the service process ends.
 	if err = c.Clear(ctx); err != nil {
 		t.Fatal(err)
 	}
 	assertEcho(t, selected(0, "routed.invalid"), true)
-	seen("capture", "capture", "daily", "daily")
+	seen("capture", "capture", "daily-0", "daily-0")
 	if after, _ := os.ReadFile(c.ConfigPath); !bytes.Equal(after, original) {
 		t.Fatal("gateway config file was written")
 	}
@@ -186,6 +188,70 @@ func TestStockCoreLanes(t *testing.T) {
 	if status, err := c.Status(ctx); err != nil || status.Catalog {
 		t.Fatalf("removed lanes remain: %+v %v", status, err)
 	}
+}
+
+// contract: docs/mihomo.md — devices with different module sets take
+// different daily lanes, each limited to the hostnames of its own modules; a
+// selection with more sets than the catalog holds reloads it with more lanes.
+func TestStockCoreDailyLanes(t *testing.T) {
+	core, origin, _, _ := startStockCore(t)
+	c := core.client
+	ctx := context.Background()
+	var mu sync.Mutex
+	var seen []string
+	proxy := connectProxy(t, func(req *http.Request) (net.Conn, error) {
+		mu.Lock()
+		seen = append(seen, req.Header.Get(LaneHeader))
+		mu.Unlock()
+		return c.DialContext(req.Context(), req.Header.Get(PolicyHeader), req.Host)
+	})
+	u, _ := url.Parse(proxy.URL)
+	c.ProxyAddress = u.Host
+	from := func(source, host string) func() (net.Conn, error) {
+		return func() (net.Conn, error) { return viaCore(source+":"+strconv.Itoa(core.mixed), 0, host+":"+origin) }
+	}
+	want := func(lanes ...string) {
+		t.Helper()
+		mu.Lock()
+		defer mu.Unlock()
+		if strings.Join(seen, ",") != strings.Join(lanes, ",") {
+			t.Fatalf("lanes %v, want %v", seen, lanes)
+		}
+		seen = nil
+	}
+	sel := Selection{Daily: []DailyLane{
+		{IPs: []string{"::1"}, Hostnames: [][]string{{"routed.invalid"}}},
+		{IPs: []string{"127.0.0.1"}, Hostnames: [][]string{{"plain.invalid"}, {"original.invalid"}}},
+	}}
+	if err := c.Select(ctx, sel); err != nil {
+		t.Fatal(err)
+	}
+	assertEcho(t, from("[::1]", "routed.invalid"), true)
+	assertEcho(t, from("[::1]", "plain.invalid"), true)
+	assertEcho(t, from("127.0.0.1", "plain.invalid"), true)
+	assertEcho(t, from("127.0.0.1", "original.invalid"), true)
+	assertEcho(t, from("127.0.0.1", "routed.invalid"), true)
+	// ::1's plain.invalid and 127.0.0.1's routed.invalid stay outside.
+	want("daily-0", "daily-1", "daily-1")
+
+	sel.Daily = append(sel.Daily, DailyLane{IPs: []string{"192.0.2.1"}, Hostnames: [][]string{{"*"}}})
+	if err := c.Select(ctx, sel); err != nil {
+		t.Fatal(err)
+	}
+	status, err := c.Status(ctx)
+	if _, grown := status.Rules["daily-3"]; err != nil || !grown || status.Rules["daily-1"] != 1 {
+		t.Fatalf("catalog after growth: %+v %v", status, err)
+	}
+	assertEcho(t, from("127.0.0.1", "plain.invalid"), true)
+	want("daily-1")
+	if err = c.Clear(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if status, err = c.Status(ctx); err != nil || status.Rules["daily-1"] != 0 || status.Rules["daily-3"] != 0 {
+		t.Fatalf("lanes after clear: %+v %v", status, err)
+	}
+	assertEcho(t, from("127.0.0.1", "plain.invalid"), true)
+	want()
 }
 
 // contract: README.md — HTTP/3 falls back to TCP only when the

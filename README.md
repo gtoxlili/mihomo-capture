@@ -89,6 +89,12 @@ The app must already use mihomo through its system proxy or TUN. Traffic that by
 
 Gateway discovery uses macOS ARP or Linux `iproute2`. To let a phone download the CA, set `ca_listen` to your computer's LAN address and a free port. That listener serves only the public certificate; the dashboard and API can stay on loopback. Trust confirmation is an operator statement, not a remote trust-store check. Only one device records at a time.
 
+## Modules
+
+A module processes the requests of chosen devices without recording them. It lists the hostnames to decrypt and what to do with their requests: rewrite headers, URLs and bodies (by regex or jq), answer from local data, or run `http-request` and `http-response` scripts. Write modules on the dashboard's 模块 page or through the [API](docs/api.md#modules), then enable each one for the trusted devices it should act on. Other devices, and other hosts, never pass through the service.
+
+A captured device keeps running its modules, and its records show what the device sent and received. A rule or script that fails passes the message through unchanged and notes why in the module's log. Scripts run on the service host and can make network requests from it; only the API token can write them. Apps that pin certificates fail on a module's hosts.
+
 ## Limits and cleanup
 
 | Default | Limit |
@@ -100,11 +106,9 @@ Gateway discovery uses macOS ARP or Linux `iproute2`. To let a phone download th
 Stored content is truncated at the limit while forwarding continues. Incomplete requests do not get replay commands. Stopping, switching devices, or clearing records invalidates old connections' write tickets. Capture stays off after a process restart.
 
 <details>
-<summary>Protocol limits and optional module hostnames</summary>
+<summary>Protocol limits</summary>
 
 Pinned certificates may prevent interception. HTTP/3 uses UDP and cannot be decrypted here. Blocking UDP 443 for the selected device can encourage TCP fallback, and affects other UDP on that port too. Non-HTTP TCP and protocols outside HTTP interception pass through.
-
-The optional module page reads MITM hostnames from Surge `.sgmodule` files. Those hosts remain decrypted for trusted devices after recording stops, without saving records. Scripts, rewrites, and module rules are not executed. Leave the module list empty if you do not need that behavior.
 
 </details>
 

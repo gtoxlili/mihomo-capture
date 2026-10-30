@@ -21,6 +21,7 @@ import (
 
 	"github.com/elazarl/goproxy"
 	"github.com/gtoxlili/mihomo-capture/internal/gateway"
+	"github.com/gtoxlili/mihomo-capture/internal/module"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"golang.org/x/net/http2"
 )
@@ -92,6 +93,7 @@ func (b *bodyTap) Close() error {
 type flowState struct {
 	t        ticket
 	r        *Record
+	x        *module.Exchange
 	req, res *captureBuffer
 	mu       sync.Mutex
 	release  func()
@@ -99,6 +101,7 @@ type flowState struct {
 type ingress struct {
 	ticket    ticket
 	transport *http.Transport
+	scope     []string // the module set the connection arrived with
 }
 type ingressKey struct{}
 
@@ -179,16 +182,14 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "CONNECT required", 405)
 		return
 	}
-	lane, policy := r.Header.Get(gateway.LaneHeader), r.Header.Get(gateway.PolicyHeader)
-	if (lane != gateway.LaneCapture && lane != gateway.LaneDaily) || policy == "" {
+	policy := r.Header.Get(gateway.PolicyHeader)
+	// The ticket and the module set belong to this connection: requests it
+	// carries after the capture changes are not attributed to the new capture,
+	// and a device moved to other modules keeps the set it was routed with.
+	t, scope, err := p.a.laneScope(r.Header.Get(gateway.LaneHeader))
+	if err != nil || policy == "" {
 		http.Error(w, "lane and policy headers required", 400)
 		return
-	}
-	// The ticket belongs to this connection: requests it carries after the
-	// capture changes are not attributed to the new capture.
-	var t ticket
-	if lane == gateway.LaneCapture {
-		t = p.a.captureTicket()
 	}
 	if _, _, err := net.SplitHostPort(r.Host); err != nil {
 		http.Error(w, "target must include a port", 400)
@@ -224,7 +225,8 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	client = &bufferConn{Conn: client, r: rw.Reader}
 	targetHost, _, _ := net.SplitHostPort(r.Host)
-	if t.device == "" && !p.a.shouldDecrypt(targetHost) {
+	// Outside a capture, only hosts of the connection's modules are decrypted.
+	if t.device == "" && len(p.a.modulesFor(scope, targetHost)) == 0 {
 		relay(client, up)
 		return
 	}
@@ -315,7 +317,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return p.a.gate.DialContext(ctx, policy, target)
 	}}
 	defer tr.CloseIdleConnections()
-	in := &ingress{t, tr}
+	in := &ingress{t, tr, scope}
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		req = req.WithContext(context.WithValue(req.Context(), ingressKey{}, in))
 		if req.URL.Scheme == "" {
@@ -403,12 +405,29 @@ func (p *Proxy) request(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, 
 	if f.t.device != "" && r.Body != nil {
 		r.Body = &bodyTap{ReadCloser: r.Body, b: f.req}
 	}
-	return r, nil
+	// Modules act behind the tap, so the record keeps what the device sent.
+	f.x = &module.Exchange{ID: f.r.ID, Modules: p.a.modulesFor(in.scope, r.URL.Hostname())}
+	res := p.a.engine.Request(f.x, r)
+	if f.x.Abort {
+		p.abort(f)
+	}
+	return r, res
 }
 
 func (p *Proxy) response(res *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 	f, ok := ctx.UserData.(*flowState)
-	if !ok || f.t.device == "" {
+	if !ok {
+		return res
+	}
+	// Modules see upstream responses only, not the service's own error page.
+	if res != nil && ctx.Error == nil && res.StatusCode != http.StatusSwitchingProtocols {
+		p.a.engine.Response(f.x, res)
+		if f.x.Abort {
+			p.abort(f)
+		}
+	}
+	f.r.Modules = f.x.Applied()
+	if f.t.device == "" {
 		return res
 	}
 	if res == nil {
@@ -470,6 +489,26 @@ func (p *Proxy) response(res *http.Response, ctx *goproxy.ProxyCtx) *http.Respon
 	p.a.record(f.t, f.r)
 	res.Body = &bodyTap{ReadCloser: res.Body, b: f.res, done: finish}
 	return res
+}
+
+// abort closes the client's connection, or its HTTP/2 stream, as a script
+// asked; the record says so.
+func (p *Proxy) abort(f *flowState) {
+	if f.t.device != "" {
+		f.mu.Lock()
+		if f.release != nil {
+			f.release()
+			f.release = nil
+		}
+		f.r.Complete = true
+		f.r.Error = "connection closed by a module script"
+		f.r.Modules = f.x.Applied()
+		f.r.DurationMS = time.Since(f.r.At).Milliseconds()
+		f.r.Request.Body = f.req.body(f.r.Request.Headers.Get("Content-Encoding"))
+		f.mu.Unlock()
+		p.a.record(f.t, f.r)
+	}
+	panic(http.ErrAbortHandler)
 }
 
 func shellQuote(s string) string { return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'" }

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Link } from "react-router"
 import { useVirtualizer } from "@tanstack/react-virtual"
-import { LoaderIcon } from "lucide-react"
+import { LoaderIcon, PuzzleIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import type { Capture, Device, RecordSummary } from "@/lib/api"
@@ -175,7 +175,8 @@ function RecordRow({ r, selected, onSelect }: { r: RecordSummary; selected: bool
       >
         {failed ? "ERR" : r.status || "…"}
       </span>
-      <span className="min-w-0 truncate" title={r.url}>
+      <span className="min-w-0 truncate" title={r.modules ? `${r.url}\n经模块处理：${r.modules.join("、")}` : r.url}>
+        {r.modules && <PuzzleIcon aria-label="经模块处理" className="mr-1 inline size-3 align-[-1px] text-signal" />}
         <span className="text-foreground">{r.host}</span>
         <span className="text-muted-foreground">{r.path}</span>
       </span>

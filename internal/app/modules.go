@@ -1,226 +1,356 @@
 package app
 
 import (
-	"bufio"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
-	"regexp"
+	"slices"
+	"sort"
 	"strings"
 	"time"
+
+	"github.com/gtoxlili/mihomo-capture/internal/gateway"
+	"github.com/gtoxlili/mihomo-capture/internal/module"
 )
 
-const maxModuleBytes = 2 << 20
+const maxModules = 64
 
-func moduleHosts(text string) (string, []string) {
-	section := ""
-	mode := "append"
-	var hosts []string
-	s := bufio.NewScanner(strings.NewReader(text))
-	s.Buffer(make([]byte, 4096), maxModuleBytes)
-	for s.Scan() {
-		line := strings.TrimSpace(s.Text())
-		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			section = strings.ToLower(line)
-			continue
-		}
-		if section != "[mitm]" {
-			continue
-		}
-		k, v, ok := strings.Cut(line, "=")
-		if !ok || strings.TrimSpace(k) != "hostname" {
-			continue
-		}
-		v = strings.TrimSpace(v)
-		mode = "replace"
-		if strings.HasPrefix(v, "%APPEND% ") {
-			mode = "append"
-			v = strings.TrimSpace(strings.TrimPrefix(v, "%APPEND%"))
-		} else if strings.HasPrefix(v, "%INSERT% ") {
-			mode = "insert"
-			v = strings.TrimSpace(strings.TrimPrefix(v, "%INSERT%"))
-		}
-		if i := strings.Index(v, " #"); i >= 0 {
-			v = v[:i]
-		}
-		hosts = nil
-		for _, h := range strings.Split(v, ",") {
-			if h = strings.TrimSpace(h); h != "" {
-				hosts = append(hosts, strings.ToLower(h))
-			}
-		}
-	}
-	return mode, hosts
+// Module is a module as the API shows it and the state file keeps it: its
+// definition and where it acts.
+type Module struct {
+	ID string `json:"id"`
+	// Enabled modules act on the trusted devices listed in Devices.
+	Enabled   bool      `json:"enabled"`
+	Devices   []string  `json:"devices"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	module.Definition
 }
 
-func matchHosts(hosts []string, host string) bool {
-	host = strings.ToLower(strings.TrimSuffix(host, "."))
-	positive := false
-	for _, h := range hosts {
-		neg := strings.HasPrefix(h, "-")
-		h = strings.TrimPrefix(h, "-")
-		p := "^" + strings.ReplaceAll(strings.ReplaceAll(regexp.QuoteMeta(h), `\*`, ".*"), `\?`, ".") + "$"
-		ok, _ := regexp.MatchString(p, host)
-		if ok && neg {
-			return false
-		}
-		positive = positive || ok
-	}
-	return positive
+// ModuleSummary is a module in the list: everything but its rules' content.
+type ModuleSummary struct {
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Enabled   bool           `json:"enabled"`
+	Devices   []string       `json:"devices"`
+	Hostnames []string       `json:"hostnames"`
+	Rules     map[string]int `json:"rules"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-func parseModule(source, text string, args map[string]string) (Module, error) {
-	m := Module{ID: newID(), Name: filepath.Base(source), Source: source, Content: text, LoadedAt: time.Now().UTC(), Processing: "hostname-only"}
-	// Parameter defaults come from Surge's argument table, then caller overrides.
-	values := map[string]string{}
-	for _, line := range strings.Split(text, "\n") {
-		if strings.HasPrefix(line, "#!arguments=") {
-			for _, p := range strings.Split(strings.TrimPrefix(line, "#!arguments="), ",") {
-				k, v, _ := strings.Cut(p, ":")
-				values[strings.TrimSpace(k)] = strings.TrimSpace(v)
-			}
-		}
-		if strings.HasPrefix(line, "#!name=") {
-			m.Name = strings.TrimSpace(strings.TrimPrefix(line, "#!name="))
-		}
-	}
-	for k, v := range args {
-		if _, ok := values[k]; !ok {
-			return m, fmt.Errorf("undeclared module argument: %s", k)
-		}
-		values[k] = v
-	}
-	for k, v := range values {
-		text = strings.ReplaceAll(text, "{{{"+k+"}}}", v)
-	}
-	_, m.Hostnames = moduleHosts(text)
-	if len(m.Hostnames) == 0 {
-		return m, errors.New("module has no MITM hostname declaration")
-	}
-	for _, h := range m.Hostnames {
-		h = strings.TrimPrefix(h, "-")
-		if h == "" || strings.ContainsAny(h, " \t\r\n/,:{}%") {
-			return m, fmt.Errorf("unsupported hostname: %q", h)
-		}
-	}
-	// Store the expanded module so restart behavior is independent of remote changes.
-	m.Content = text
-	sum := sha256.Sum256([]byte(text))
-	m.SHA256 = hex.EncodeToString(sum[:])
-	return m, nil
+type moduleState struct {
+	Module
+	compiled *module.Module
 }
 
-func (a *App) RegisterModule(ctx context.Context, source string, args map[string]string) (Module, error) {
-	var m Module
-	if len(source) > 4096 {
-		return m, errors.New("module source is too long")
-	}
-	var r io.ReadCloser
-	u, err := url.Parse(source)
-	if err != nil {
-		return m, err
-	}
-	if u.Scheme == "https" || u.Scheme == "http" {
-		req, err := http.NewRequestWithContext(ctx, "GET", source, nil)
-		if err != nil {
-			return m, err
-		}
-		c := http.Client{Timeout: 20 * time.Second, Transport: &http.Transport{Proxy: nil, TLSHandshakeTimeout: 10 * time.Second, ResponseHeaderTimeout: 15 * time.Second}}
-		defer c.CloseIdleConnections()
-		resp, err := c.Do(req)
-		if err != nil {
-			return m, err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != 200 {
-			return m, fmt.Errorf("module download returned HTTP %d", resp.StatusCode)
-		}
-		r = resp.Body
-	} else {
-		if u.Scheme != "" && u.Scheme != "file" {
-			return m, errors.New("module source must be HTTP(S) URL or absolute file path")
-		}
-		p := source
-		if u.Scheme == "file" {
-			if u.Host != "" {
-				return m, errors.New("file URL must be local")
-			}
-			p = u.Path
-		}
-		if !filepath.IsAbs(p) {
-			return m, errors.New("local module path must be absolute")
-		}
-		f, err := os.Open(p)
-		if err != nil {
-			return m, err
-		}
-		defer f.Close()
-		r = f
-	}
-	b, err := io.ReadAll(io.LimitReader(r, maxModuleBytes+1))
-	if err != nil {
-		return m, err
-	}
-	if len(b) > maxModuleBytes {
-		return m, errors.New("module exceeds 2 MiB")
-	}
-	m, err = parseModule(source, string(b), args)
-	if err != nil {
-		return m, err
-	}
+func (m *moduleState) summary() ModuleSummary {
+	d := m.Definition
+	return ModuleSummary{ID: m.ID, Name: d.Name, Enabled: m.Enabled, Devices: m.Devices, Hostnames: d.Hostnames, UpdatedAt: m.UpdatedAt, Rules: map[string]int{
+		"header_rewrites": len(d.HeaderRewrites), "url_rewrites": len(d.URLRewrites), "map_locals": len(d.MapLocals), "body_rewrites": len(d.BodyRewrites), "scripts": len(d.Scripts),
+	}}
+}
+
+// slot is a daily lane's module set. A set no device uses any more stays
+// retired for slotGrace before the slot takes another set: a connection the
+// gateway routed just before the change still finds the set it was routed for.
+type slot struct {
+	key     string // module IDs joined by ","
+	retired time.Time
+}
+
+const slotGrace = 30 * time.Second
+
+func (s slot) live() bool { return s.key != "" && s.retired.IsZero() }
+
+func (a *App) Modules() []ModuleSummary {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if len(a.modules) >= 32 {
-		return m, errors.New("maximum 32 modules")
+	out := make([]ModuleSummary, 0, len(a.modules))
+	for _, m := range a.modules {
+		out = append(out, m.summary())
 	}
-	for _, x := range a.modules {
-		if x.Source == source {
-			return m, errors.New("source is already registered; remove it before replacing")
-		}
+	return out
+}
+
+func (a *App) Module(id string) (Module, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if i := a.moduleIndexLocked(id); i >= 0 {
+		return a.modules[i].Module, nil
+	}
+	return Module{}, os.ErrNotExist
+}
+
+func (a *App) ModuleLogs(id string) ([]module.LogEntry, error) {
+	if _, err := a.Module(id); err != nil {
+		return nil, err
+	}
+	return a.engine.Logs(id), nil
+}
+
+func (a *App) moduleIndexLocked(id string) int {
+	return slices.IndexFunc(a.modules, func(m *moduleState) bool { return m.ID == id })
+}
+
+// CreateModule adds a module, disabled and without devices.
+func (a *App) CreateModule(d module.Definition) (Module, error) {
+	id := newID()
+	c, err := module.Compile(id, d)
+	if err != nil {
+		return Module{}, err
+	}
+	now := time.Now().UTC()
+	m := &moduleState{Module{ID: id, Devices: []string{}, CreatedAt: now, UpdatedAt: now, Definition: c.Definition}, c}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if len(a.modules) >= maxModules {
+		return Module{}, fmt.Errorf("at most %d modules", maxModules)
 	}
 	a.modules = append(a.modules, m)
 	if err = a.saveLocked(); err != nil {
 		a.modules = a.modules[:len(a.modules)-1]
-		return m, err
+		return Module{}, err
 	}
-	if err = a.syncLocked(ctx); err != nil {
-		a.modules = a.modules[:len(a.modules)-1]
-		_ = a.saveLocked()
-		return m, err
+	return m.Module, nil
+}
+
+// UpdateModule replaces a module's definition. Requests that follow use it,
+// including those on connections already open.
+func (a *App) UpdateModule(ctx context.Context, id string, d module.Definition) (Module, error) {
+	c, err := module.Compile(id, d)
+	if err != nil {
+		return Module{}, err
 	}
-	return m, nil
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	i := a.moduleIndexLocked(id)
+	if i < 0 {
+		return Module{}, os.ErrNotExist
+	}
+	m := a.modules[i]
+	old := *m
+	m.Definition, m.compiled, m.UpdatedAt = c.Definition, c, time.Now().UTC()
+	rerouted := m.Enabled && !slices.Equal(old.Hostnames, m.Hostnames)
+	if err = a.commitModulesLocked(ctx, rerouted, func() { *m = old }); err != nil {
+		return Module{}, err
+	}
+	return m.Module, nil
+}
+
+// ActivateModule enables or disables a module and, when devices is not nil,
+// sets the devices it acts on.
+func (a *App) ActivateModule(ctx context.Context, id string, enabled bool, devices *[]string) (Module, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	i := a.moduleIndexLocked(id)
+	if i < 0 {
+		return Module{}, os.ErrNotExist
+	}
+	m := a.modules[i]
+	old := *m
+	if devices != nil {
+		list := []string{}
+		for _, raw := range *devices {
+			d, err := a.deviceID(raw)
+			if err != nil {
+				return Module{}, invalidInput{fmt.Errorf("devices: %q: %w", raw, err)}
+			}
+			if _, ok := a.devices[d]; !ok {
+				return Module{}, invalidInput{fmt.Errorf("devices: %q is not a known device", raw)}
+			}
+			list = append(list, d)
+		}
+		sort.Strings(list)
+		m.Devices = slices.Compact(list)
+	}
+	m.Enabled = enabled
+	m.UpdatedAt = time.Now().UTC()
+	if sets := a.moduleSetsLocked(); sets > gateway.MaxDailyLanes {
+		*m = old
+		return Module{}, fmt.Errorf("devices would use %d distinct module sets; at most %d can be active", sets, gateway.MaxDailyLanes)
+	}
+	if err := a.commitModulesLocked(ctx, true, func() { *m = old }); err != nil {
+		return Module{}, err
+	}
+	return m.Module, nil
 }
 
 func (a *App) RemoveModule(ctx context.Context, id string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	old := append([]Module{}, a.modules...)
-	found := false
-	for i, m := range a.modules {
-		if m.ID == id {
-			a.modules = append(a.modules[:i], a.modules[i+1:]...)
-			found = true
-			break
-		}
-	}
-	if !found {
+	i := a.moduleIndexLocked(id)
+	if i < 0 {
 		return os.ErrNotExist
 	}
-	if err := a.saveLocked(); err != nil {
-		a.modules = old
+	old := append([]*moduleState{}, a.modules...)
+	enabled := a.modules[i].Enabled
+	a.modules = slices.Delete(a.modules, i, i+1)
+	if err := a.commitModulesLocked(ctx, enabled, func() { a.modules = old }); err != nil {
 		return err
 	}
-	if err := a.syncLocked(ctx); err != nil {
-		a.modules = old
-		_ = a.saveLocked()
-		return err
-	}
+	a.engine.Forget(id)
 	return nil
 }
+
+// commitModulesLocked persists a module change, makes requests see it, and
+// republishes the lanes when routing changed; on failure it undoes the change.
+func (a *App) commitModulesLocked(ctx context.Context, rerouted bool, undo func()) error {
+	err := a.saveLocked()
+	if err == nil {
+		a.publishModulesLocked()
+		if rerouted {
+			err = a.syncLocked(ctx)
+		}
+		if err != nil {
+			undo()
+			a.publishModulesLocked()
+			_ = a.saveLocked()
+		}
+		return err
+	}
+	undo()
+	return err
+}
+
+// publishModulesLocked replaces the table of enabled modules that requests
+// read without taking the lock.
+func (a *App) publishModulesLocked() {
+	active := map[string]*module.Module{}
+	for _, m := range a.modules {
+		if m.Enabled {
+			active[m.ID] = m.compiled
+		}
+	}
+	a.active.Store(&active)
+}
+
+// moduleSetLocked is the key of the enabled modules acting on a device, in
+// module order, which is the order their rules apply in.
+func (a *App) moduleSetLocked(device string) string {
+	var ids []string
+	for _, m := range a.modules {
+		if m.Enabled && len(m.Hostnames) > 0 && slices.Contains(m.Devices, device) {
+			ids = append(ids, m.ID)
+		}
+	}
+	return strings.Join(ids, ",")
+}
+
+func (a *App) moduleSetsLocked() int {
+	sets := map[string]bool{}
+	for id, d := range a.devices {
+		if key := a.moduleSetLocked(id); key != "" && d.Trusted {
+			sets[key] = true
+		}
+	}
+	return len(sets)
+}
+
+// assignSlotsLocked gives each module set a daily lane. A set keeps its slot
+// while it is in use, so reassignments happen only on module changes.
+func (a *App) assignSlotsLocked(sets map[string][]string, now time.Time) {
+	pending := map[string]bool{}
+	for key := range sets {
+		pending[key] = true
+	}
+	for i := range a.slots {
+		s := &a.slots[i]
+		switch {
+		case s.key == "":
+		case pending[s.key]:
+			s.retired = time.Time{}
+			delete(pending, s.key)
+		case s.retired.IsZero():
+			s.retired = now
+		case now.Sub(s.retired) >= slotGrace:
+			*s = slot{}
+		}
+	}
+	keys := make([]string, 0, len(pending))
+	for key := range pending {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if i := slices.IndexFunc(a.slots, func(s slot) bool { return s.key == "" }); i >= 0 {
+			a.slots[i] = slot{key: key}
+		} else {
+			a.slots = append(a.slots, slot{key: key})
+		}
+	}
+	for len(a.slots) > 0 && a.slots[len(a.slots)-1].key == "" {
+		a.slots = a.slots[:len(a.slots)-1]
+	}
+}
+
+// dailyLanesLocked is the daily part of the selection, one lane per slot.
+func (a *App) dailyLanesLocked(sets map[string][]string) []gateway.DailyLane {
+	a.assignSlotsLocked(sets, time.Now())
+	lanes := make([]gateway.DailyLane, len(a.slots))
+	for i, s := range a.slots {
+		if !s.live() {
+			continue
+		}
+		lanes[i].IPs = sets[s.key]
+		for _, id := range strings.Split(s.key, ",") {
+			if j := a.moduleIndexLocked(id); j >= 0 {
+				lanes[i].Hostnames = append(lanes[i].Hostnames, a.modules[j].Hostnames)
+			}
+		}
+	}
+	return lanes
+}
+
+// laneScope resolves a lane connection when it arrives: the capture lane
+// gets a record ticket and the selected device's modules, a daily lane the
+// module set its slot was published with.
+func (a *App) laneScope(lane string) (ticket, []string, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if lane == gateway.LaneCapture {
+		if a.capture == nil {
+			return ticket{}, nil, nil
+		}
+		t := ticket{a.capture.DeviceID, a.capture.Generation, a.epoch}
+		return t, splitSet(a.moduleSetLocked(t.device)), nil
+	}
+	n, ok := gateway.DailySlot(lane)
+	if !ok {
+		return ticket{}, nil, errors.New("unknown lane")
+	}
+	if n >= len(a.slots) {
+		return ticket{}, nil, nil
+	}
+	s := a.slots[n]
+	if !s.retired.IsZero() && time.Since(s.retired) >= slotGrace {
+		return ticket{}, nil, nil
+	}
+	return ticket{}, splitSet(s.key), nil
+}
+
+func splitSet(key string) []string {
+	if key == "" {
+		return nil
+	}
+	return strings.Split(key, ",")
+}
+
+// modulesFor returns the scope's modules that are enabled now and act on the
+// host. Disabling or editing a module takes effect on the next request.
+func (a *App) modulesFor(scope []string, host string) []*module.Module {
+	if len(scope) == 0 {
+		return nil
+	}
+	active := *a.active.Load()
+	var out []*module.Module
+	for _, id := range scope {
+		if m := active[id]; m != nil && m.MatchHost(host) {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+// invalidInput is an argument error, reported as a bad request.
+type invalidInput struct{ error }

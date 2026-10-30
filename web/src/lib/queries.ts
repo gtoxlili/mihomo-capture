@@ -1,12 +1,14 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
-import { api, ApiError, type RecordFilter } from "./api"
+import { api, ApiError, type ModuleDefinition, type RecordFilter } from "./api"
 
 export const keys = {
   status: ["status"] as const,
   devices: ["devices"] as const,
   modules: ["modules"] as const,
+  module: (id: string) => ["modules", id] as const,
+  moduleLogs: (id: string) => ["module-logs", id] as const,
   records: (f: RecordFilter) => ["records", f] as const,
   record: (id: string) => ["record", id] as const,
   ticker: (device: string) => ["ticker", device] as const,
@@ -26,7 +28,20 @@ export function useDevices() {
 }
 
 export function useModules() {
-  return useQuery({ queryKey: keys.modules, queryFn: api.modules, refetchInterval: 15000 })
+  return useQuery({ queryKey: keys.modules, queryFn: async () => (await api.modules()).items, refetchInterval: 15000 })
+}
+
+export function useModule(id: string | undefined) {
+  return useQuery({ queryKey: keys.module(id ?? ""), queryFn: () => api.module(id!), enabled: !!id })
+}
+
+export function useModuleLogs(id: string | null) {
+  return useQuery({
+    queryKey: keys.moduleLogs(id ?? ""),
+    queryFn: async () => (await api.moduleLogs(id!)).items,
+    enabled: !!id,
+    refetchInterval: 3000,
+  })
 }
 
 export function useRecords(filter: RecordFilter, live: boolean) {
@@ -118,17 +133,26 @@ export function useRefreshDevices() {
   })
 }
 
-export function useRegisterModule() {
-  return useAction((source: string, args: Record<string, string>) => api.registerModule(source, args), {
-    success: "已注册模块",
-    invalidate: [keys.modules, keys.status],
+export function useSaveModule() {
+  return useAction(
+    (id: string | undefined, d: ModuleDefinition) => (id ? api.updateModule(id, d) : api.createModule(d)),
+    {
+      success: "已保存模块",
+      invalidate: [keys.modules],
+    }
+  )
+}
+
+export function useActivateModule() {
+  return useAction((id: string, enabled: boolean, devices?: string[]) => api.activateModule(id, enabled, devices), {
+    invalidate: [keys.modules],
   })
 }
 
 export function useRemoveModule() {
   return useAction((id: string) => api.removeModule(id), {
-    success: "已移除模块",
-    invalidate: [keys.modules, keys.status],
+    success: "已删除模块",
+    invalidate: [keys.modules],
   })
 }
 

@@ -313,14 +313,15 @@ func TestCaptureIsolationAndLateWrites(t *testing.T) {
 	if err := f.a.Trust(ctx, otherMAC, true, "fixture installed CA"); err != nil {
 		t.Fatal(err)
 	}
-	if sel := f.gate.published(); strings.Join(sel.CaptureIPs, ",") != "192.0.2.10" || strings.Join(sel.DailyIPs, ",") != "192.0.2.11" {
+	// A trusted device without active modules takes no daily lane.
+	if sel := f.gate.published(); strings.Join(sel.CaptureIPs, ",") != "192.0.2.10" || len(sel.Daily) != 0 {
 		t.Fatalf("published selection %+v", sel)
 	}
 	if _, err := f.a.StartCapture(ctx, otherMAC, nil); err == nil {
 		t.Fatal("second device replaced an active capture")
 	}
-	// Daily-lane hosts outside every module pass through untouched.
-	if res := get(f.client(t, gateway.LaneDaily)); !bytes.Equal(res.TLS.PeerCertificates[0].Raw, f.leaf.Certificate[0]) {
+	// A daily lane without a module set passes through untouched.
+	if res := get(f.client(t, "daily-0")); !bytes.Equal(res.TLS.PeerCertificates[0].Raw, f.leaf.Certificate[0]) {
 		t.Fatal("daily lane intercepted a host outside the module hostnames")
 	}
 	if got := records(t, f.a, false); len(got) != 0 {
@@ -347,7 +348,7 @@ func TestCaptureIsolationAndLateWrites(t *testing.T) {
 		t.Fatalf("new connection not recorded: %d records", n)
 	}
 
-	ticket := f.a.captureTicket()
+	ticket, _, _ := f.a.laneScope(gateway.LaneCapture)
 	if err := f.a.ClearRecords(); err != nil {
 		t.Fatal(err)
 	}
@@ -585,7 +586,9 @@ func TestLargeBodyPassthrough(t *testing.T) {
 	}
 }
 
-func TestAPIAuthenticationAndModuleHostnamePatch(t *testing.T) {
+// contract: docs/api.md — /v1 needs the API token; the certificate and the
+// dashboard's files are public; the LAN listener serves only the certificate.
+func TestAPIAuthentication(t *testing.T) {
 	f := newFixture(t)
 	dashboard := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	api := httptest.NewServer(f.a.Routes(f.ca.Leaf, dashboard))
@@ -638,40 +641,6 @@ func TestAPIAuthenticationAndModuleHostnamePatch(t *testing.T) {
 			t.Fatalf("LAN CA listener exposed %s", path)
 		}
 		res.Body.Close()
-	}
-	path := filepath.Join(f.dir, "fixture.sgmodule")
-	text := "#!name=Fixture\n#!arguments=host:example.com\n[Script]\nx = type=http-response,script-path=not-fetched.js\n[MITM]\nhostname = %APPEND% -blocked.{{{host}}}, *.{{{host}}}, 127.0.0.1\n"
-	if err = os.WriteFile(path, []byte(text), 0600); err != nil {
-		t.Fatal(err)
-	}
-	m, err := f.a.RegisterModule(context.Background(), path, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if m.Processing != "hostname-only" {
-		t.Fatalf("module %+v", m)
-	}
-	// Only trusted devices take the daily lane, limited to the module patch.
-	if sel := f.gate.published(); strings.Join(sel.Hostnames, ",") != "-blocked.example.com,*.example.com,127.0.0.1" || strings.Join(sel.DailyIPs, ",") != "192.0.2.10" {
-		t.Fatalf("published selection %+v", sel)
-	}
-	origin := f.origin(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-	intercepted := func() bool {
-		res, err := f.client(t, gateway.LaneDaily).Get(origin.URL)
-		if err != nil {
-			t.Fatal(err)
-		}
-		res.Body.Close()
-		return !bytes.Equal(res.TLS.PeerCertificates[0].Raw, f.leaf.Certificate[0])
-	}
-	if !intercepted() || len(records(t, f.a, false)) != 0 {
-		t.Fatal("daily lane must decrypt module hostnames without recording")
-	}
-	if err = f.a.RemoveModule(context.Background(), m.ID); err != nil {
-		t.Fatal(err)
-	}
-	if sel := f.gate.published(); len(sel.Hostnames) != 0 || intercepted() {
-		t.Fatal("removed module still selected")
 	}
 }
 

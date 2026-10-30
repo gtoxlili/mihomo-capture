@@ -105,6 +105,11 @@ func run(path string, initIdentity, check, clearGateway, removeGateway bool) err
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := a.Close(); err != nil {
+			slog.Warn("saving the script store failed", "error", err)
+		}
+	}()
 	proxy, err := app.NewProxy(a, ca)
 	if err != nil {
 		return err

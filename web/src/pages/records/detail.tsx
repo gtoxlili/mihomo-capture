@@ -125,6 +125,12 @@ function Loaded({ r, devices, onClose, onFilter }: { r: CaptureRecord } & Omit<P
           <Fact label="设备">{deviceName(device)}</Fact>
           <Fact label="会话">{r.session}</Fact>
         </dl>
+        {r.modules && r.modules.length > 0 && (
+          <p className="text-[13px] text-muted-foreground">
+            经模块处理：<span className="text-ink">{r.modules.join("、")}</span>
+            。这里是设备一侧看到的请求和响应。
+          </p>
+        )}
         {(r.error || !r.complete || !r.replayable) && (
           <div className="space-y-1.5">
             {r.error && <Flag tone="error">{r.error}</Flag>}

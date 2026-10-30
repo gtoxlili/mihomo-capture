@@ -23,7 +23,6 @@ export type Capture = {
 export type Status = {
   api_version: number
   capture: Capture | null
-  hostnames: string[]
   ca: { name: string; fingerprint: string; not_after: string; lan_url: string }
   gateway: {
     version: string
@@ -41,14 +40,88 @@ export type Status = {
   }
 }
 
-export type Module = {
+export type Direction = "http-request" | "http-response"
+
+export type HeaderRewrite = {
+  type: Direction
+  pattern: string
+  action: "header-add" | "header-del" | "header-replace" | "header-replace-regex"
+  name: string
+  value?: string
+  regex?: string
+  replacement?: string
+}
+
+export type URLRewrite = {
+  pattern: string
+  replacement: string
+  type: "header" | "302" | "307" | "reject"
+}
+
+export type MapLocal = {
+  pattern: string
+  data_type: "text" | "base64" | "tiny-gif"
+  data: string
+  status_code: number
+  headers?: Record<string, string>
+}
+
+export type BodyRewrite = {
+  type: Direction | "http-request-jq" | "http-response-jq"
+  pattern: string
+  replacements?: { regex: string; replacement: string }[]
+  jq?: string
+}
+
+export type Script = {
+  name: string
+  type: Direction
+  pattern: string
+  code: string
+  requires_body: boolean
+  binary_body_mode: boolean
+  full_header_mode: boolean
+  max_size: number
+  timeout: number
+  argument?: string
+}
+
+export type ModuleDefinition = {
+  name: string
+  hostnames: string[]
+  header_rewrites: HeaderRewrite[]
+  url_rewrites: URLRewrite[]
+  map_locals: MapLocal[]
+  body_rewrites: BodyRewrite[]
+  scripts: Script[]
+}
+
+export type Module = ModuleDefinition & {
+  id: string
+  enabled: boolean
+  devices: string[]
+  created_at: string
+  updated_at: string
+}
+
+export type RuleList = "header_rewrites" | "url_rewrites" | "map_locals" | "body_rewrites" | "scripts"
+
+export type ModuleSummary = {
   id: string
   name: string
-  source: string
+  enabled: boolean
+  devices: string[]
   hostnames: string[]
-  sha256: string
-  loaded_at: string
-  processing: string
+  rules: Record<RuleList, number>
+  updated_at: string
+}
+
+export type ModuleLog = {
+  at: string
+  level: "info" | "warn" | "error" | "notify"
+  source: string
+  url?: string
+  message: string
 }
 
 export type Body = {
@@ -87,6 +160,7 @@ type RecordBase = {
   complete: boolean
   replayable: boolean
   error?: string
+  modules?: string[]
 }
 
 export type RecordSummary = RecordBase & {
@@ -188,10 +262,14 @@ export const api = {
       block_udp_ports: blockUDPPorts,
     }),
   stopCapture: () => call("DELETE", "/v1/capture"),
-  modules: () => call<{ items: Module[]; hostnames: string[] }>("GET", "/v1/modules"),
-  registerModule: (source: string, args: Record<string, string>) =>
-    call<Module>("POST", "/v1/modules", { source, arguments: args }),
+  modules: () => call<{ items: ModuleSummary[] }>("GET", "/v1/modules"),
+  module: (id: string) => call<Module>("GET", `/v1/modules/${encodeURIComponent(id)}`),
+  createModule: (d: ModuleDefinition) => call<Module>("POST", "/v1/modules", d),
+  updateModule: (id: string, d: ModuleDefinition) => call<Module>("PUT", `/v1/modules/${encodeURIComponent(id)}`, d),
+  activateModule: (id: string, enabled: boolean, devices?: string[]) =>
+    call<Module>("PUT", `/v1/modules/${encodeURIComponent(id)}/activation`, { enabled, devices }),
   removeModule: (id: string) => call("DELETE", `/v1/modules/${encodeURIComponent(id)}`),
+  moduleLogs: (id: string) => call<{ items: ModuleLog[] }>("GET", `/v1/modules/${encodeURIComponent(id)}/logs`),
   records: (filter: RecordFilter, before?: string, limit = 100) =>
     call<{ items: RecordSummary[]; next: string }>("GET", `/v1/records${query({ ...filter, before, limit })}`),
   record: (id: string) => call<CaptureRecord>("GET", `/v1/records/${encodeURIComponent(id)}`),

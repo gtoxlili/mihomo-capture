@@ -44,8 +44,11 @@ export function SystemPage() {
             </Row>
             <Row label="选择规则">
               <span className="tabular">
-                抓包 {g.rules?.capture ?? 0} 条，日常 {g.rules?.daily ?? 0} 条
+                抓包 {g.rules?.capture ?? 0} 条，日常 {dailyRules(g.rules)} 条
               </span>
+              <p className="text-xs text-muted-foreground">
+                启用的模块按设备分组，每组设备走一条日常通道；通道数按需翻倍增加，增加时网关重载一次配置。
+              </p>
             </Row>
           </>
         )}
@@ -91,6 +94,13 @@ export function SystemPage() {
       <ClearRecordsDialog open={clearing} onOpenChange={setClearing} />
     </div>
   )
+}
+
+// Daily lanes are named daily-0, daily-1, … after the slot each module set takes.
+function dailyRules(rules: Record<string, number> | null) {
+  return Object.entries(rules ?? {})
+    .filter(([lane]) => lane.startsWith("daily-"))
+    .reduce((n, [, count]) => n + count, 0)
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

@@ -10,7 +10,9 @@ README.md covers usage and the two modes, docs/mihomo.md how the capture lanes e
 
 Both modes share one capture path. `local`, the default, captures the machine running the service by its loopback, interface and configured source addresses. `gateway` captures one LAN device, identified by MAC from the neighbor table; the machine running mihomo is never a gateway-mode device.
 
-Surge modules contribute only their MITM hostname patch. Scripts, rewrites and module rules are not executed; `Processor` in internal/app/types.go is the extension point.
+Modules are the service's own form, written through the API, never downloaded: hostnames plus header rewrites, URL rewrites, map locals, body rewrites and http-request/http-response scripts. docs/api.md is their specification. They carry no routing rules; routing stays mihomo's. Each module is enabled or disabled and lists the devices it acts on. internal/module is the engine; it never blocks a message, and every failure passes it through unchanged.
+
+Devices that share one set of enabled modules share one daily lane, so the lane a connection arrives on tells the service which modules apply.
 
 The dashboard in web/ is built into the binary and served on the API address. Page files need no token and data flows only through the token-protected /v1 API, so the dashboard is one more API caller and adds no capability.
 
@@ -26,9 +28,11 @@ Implementation > this file > docs.
 
 **I1. Only a trusted, currently selected device produces capture records.** Switching the capture, revoking trust and clearing records invalidate the write tickets of earlier requests. Enforced by the selection published to mihomo, the ticket issued when a capture-lane connection arrives, and the store lock, all in internal/app.
 
-**I2. Capture state lives only in memory, and mihomo hands no traffic to the service while its process is gone.** A restart returns to the daily state. Both lanes are emptied when the process ends, and they disappear once mihomo reloads or restarts its own configuration, so an offline service never blocks the network. Enforced by the startup clear, the exit clear in scripts/run.sh, and internal/gateway never writing mihomo's configuration file.
+**I2. Capture state lives only in memory, and mihomo hands no traffic to the service while its process is gone.** A restart returns to the daily state. All lanes are emptied when the process ends, and they disappear once mihomo reloads or restarts its own configuration, so an offline service never blocks the network. Enforced by the startup clear, the exit clear in scripts/run.sh, and internal/gateway never writing mihomo's configuration file.
 
 **I3. Captured traffic takes the policy mihomo's original rules choose for the original connection.** Source address, source port and inbound rules can change the choice, so each lane evaluates a copy of the original rules with the device's own connection metadata, and the service leaves only through the chosen policy without evaluating rules again. Enforced by the catalog and the egress listener in internal/gateway.
+
+**I4. A module acts only on requests of the trusted devices it is enabled on, and only on hosts in its own hostname list.** This holds during a capture too. Enforced by the daily lanes published per module set, the module set resolved when a lane connection arrives, and the host check on every request in internal/app.
 
 # Docs
 

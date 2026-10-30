@@ -31,8 +31,8 @@ function IdleBand({ listening }: { listening: number }) {
         <p className="text-[13px] text-muted-foreground">
           没有设备在被抓包。
           {listening > 0
-            ? `${listening} 台受信设备在线，只在访问模块 hostname 时被解密，不产生记录。`
-            : "受信设备只在访问模块 hostname 时被解密，不产生记录。"}
+            ? `${listening} 台受信设备在线，只有启用到它们身上的模块的主机名被解密和处理，不产生记录。`
+            : "受信设备只有启用到它们身上的模块的主机名被解密和处理，不产生记录。"}
         </p>
       </div>
       <Button asChild variant="outline">

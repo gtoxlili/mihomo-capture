@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/gtoxlili/mihomo-capture/internal/gateway"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -35,7 +36,7 @@ func TestLocalCaptureLifecycle(t *testing.T) {
 	if _, err := f.a.StartCapture(ctx, "local", nil); err != nil {
 		t.Fatal(err)
 	}
-	ticket := f.a.captureTicket()
+	ticket, _, _ := f.a.laneScope(gateway.LaneCapture)
 	f.a.record(ticket, &Record{ID: strings.Repeat("a", 32), At: time.Now(), Host: "example.test", Complete: true})
 	req := httptest.NewRequest("GET", "/v1/records?device=local", nil)
 	req.Header.Set("Authorization", "Bearer "+f.a.Config.APIToken)

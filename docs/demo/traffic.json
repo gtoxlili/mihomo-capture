@@ -1085,7 +1085,7 @@
     }
   ],
   "status": {
-    "api_version": 2,
+    "api_version": 3,
     "capture": {
       "device_id": "local",
       "started_at": "2026-10-29T12:26:14Z",
@@ -1094,7 +1094,6 @@
       ],
       "generation": 7
     },
-    "hostnames": [],
     "ca": {
       "name": "Mihomo Capture CA",
       "fingerprint": "ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34",
@@ -1106,7 +1105,8 @@
       "catalog": true,
       "rules": {
         "capture": 1,
-        "daily": 0
+        "daily-0": 0,
+        "daily-1": 0
       }
     },
     "gateway_error": "",

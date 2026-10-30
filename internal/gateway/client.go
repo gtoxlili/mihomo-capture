@@ -27,41 +27,28 @@ import (
 
 // Selection is the complete set of sources that enter the capture service.
 type Selection struct {
-	DailyIPs      []string // trusted devices, limited to Hostnames
-	Hostnames     []string // Surge MITM hostname patch; a leading "-" excludes
 	CaptureIPs    []string // the selected device, every TCP connection
 	BlockUDPPorts []uint16 // dropped for the selected device so QUIC falls back to TCP
+	// Daily has one lane per set of active modules; its index is the slot the
+	// lane header names. An empty lane routes nothing.
+	Daily []DailyLane
+}
+
+// DailyLane carries the trusted devices that share one set of active modules,
+// limited to those modules' hostnames.
+type DailyLane struct {
+	IPs       []string
+	Hostnames [][]string // one hostname list per module
 }
 
 func (s Selection) rules() (map[string][]string, error) {
-	out := map[string][]string{LaneCapture: {}, LaneDaily: {}}
-	daily, err := sources(s.DailyIPs)
-	if err != nil {
-		return nil, err
+	if len(s.Daily) > MaxDailyLanes {
+		return nil, fmt.Errorf("at most %d distinct module sets can be active", MaxDailyLanes)
 	}
+	out := map[string][]string{LaneCapture: {}}
 	capture, err := sources(s.CaptureIPs)
 	if err != nil {
 		return nil, err
-	}
-	var include, exclude []string
-	for _, h := range s.Hostnames {
-		negative := strings.HasPrefix(h, "-")
-		h = strings.TrimPrefix(h, "-")
-		if h == "" || len(h) > 253 || strings.ContainsAny(h, " \t\r\n,()/\\") {
-			return nil, fmt.Errorf("invalid hostname pattern %q", h)
-		}
-		if negative {
-			exclude = append(exclude, "(DOMAIN-WILDCARD,"+h+")")
-		} else {
-			include = append(include, "(DOMAIN-WILDCARD,"+h+")")
-		}
-	}
-	if daily != "" && len(include) > 0 {
-		conditions := []string{daily, "(NETWORK,TCP)", anyOf(include)}
-		if len(exclude) > 0 {
-			conditions = append(conditions, "(NOT,("+anyOf(exclude)+"))")
-		}
-		out[LaneDaily] = append(out[LaneDaily], "AND,("+strings.Join(conditions, ",")+")")
 	}
 	if capture != "" {
 		out[LaneCapture] = append(out[LaneCapture], "AND,("+capture+",(NETWORK,TCP))")
@@ -76,7 +63,63 @@ func (s Selection) rules() (map[string][]string, error) {
 			out[LaneCapture] = append(out[LaneCapture], "AND,("+capture+",(NETWORK,UDP),"+anyOf(ports)+")")
 		}
 	}
+	for i, d := range s.Daily {
+		lane := dailyLane(i)
+		out[lane] = []string{}
+		src, err := sources(d.IPs)
+		if err != nil {
+			return nil, err
+		}
+		var modules []string
+		for _, list := range d.Hostnames {
+			h, err := hostList(list)
+			if err != nil {
+				return nil, err
+			}
+			if h != "" {
+				modules = append(modules, h)
+			}
+		}
+		if src != "" && len(modules) > 0 {
+			out[lane] = append(out[lane], "AND,("+src+",(NETWORK,TCP),"+anyOf(modules)+")")
+		}
+	}
 	return out, nil
+}
+
+// hostList is a module's hostname list as a rule condition: the first
+// matching entry decides, so each include holds unless an earlier exclusion
+// matched.
+func hostList(list []string) (string, error) {
+	var terms, excluded, run []string
+	flush := func() {
+		if len(run) == 0 {
+			return
+		}
+		t := anyOf(run)
+		if len(excluded) > 0 {
+			t = "(AND,(" + t + ",(NOT,(" + anyOf(excluded) + "))))"
+		}
+		terms, run = append(terms, t), nil
+	}
+	for _, h := range list {
+		negative := strings.HasPrefix(h, "-")
+		h = strings.TrimPrefix(h, "-")
+		if h == "" || len(h) > 253 || strings.ContainsAny(h, " \t\r\n,()/\\:") {
+			return "", fmt.Errorf("invalid hostname pattern %q", h)
+		}
+		if negative {
+			flush()
+			excluded = append(excluded, "(DOMAIN-WILDCARD,"+h+")")
+		} else {
+			run = append(run, "(DOMAIN-WILDCARD,"+h+")")
+		}
+	}
+	flush()
+	if len(terms) == 0 {
+		return "", nil
+	}
+	return anyOf(terms), nil
 }
 
 func sources(ips []string) (string, error) {
@@ -109,8 +152,9 @@ type Status struct {
 	Version string `json:"version"`
 	// Catalog reports whether the running gateway has the capture lanes.
 	// Without them every connection follows the original rules.
-	Catalog bool           `json:"catalog"`
-	Rules   map[string]int `json:"rules"`
+	Catalog bool `json:"catalog"`
+	// Rules counts each loaded lane's selection rules: capture, daily-0, ...
+	Rules map[string]int `json:"rules"`
 }
 
 type Client struct {
@@ -124,6 +168,7 @@ type Client struct {
 	http            *http.Client
 	mu              sync.Mutex
 	installed       bool
+	daily           int // daily lanes in the installed catalog
 }
 
 func NewClient(socketPath, configPath, stateDir string) *Client {
@@ -183,7 +228,8 @@ func (c *Client) call(ctx context.Context, method, path string, body any, out an
 	return nil
 }
 
-// lanes returns the loaded selector rule counts, empty without the catalog.
+// lanes returns the loaded selector rule counts by lane, empty without the
+// catalog.
 func (c *Client) lanes(ctx context.Context) (map[string]int, error) {
 	var list struct {
 		Providers map[string]struct {
@@ -194,12 +240,21 @@ func (c *Client) lanes(ctx context.Context) (map[string]int, error) {
 		return nil, err
 	}
 	out := map[string]int{}
-	for _, lane := range lanes {
-		if p, ok := list.Providers[laneName(lane)]; ok {
+	for name, p := range list.Providers {
+		if lane, ok := strings.CutPrefix(name, prefix); ok && isLane(lane) {
 			out[lane] = p.RuleCount
 		}
 	}
 	return out, nil
+}
+
+func covers(loaded map[string]int, names []string) bool {
+	for _, lane := range names {
+		if _, ok := loaded[lane]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *Client) Status(ctx context.Context) (Status, error) {
@@ -215,13 +270,13 @@ func (c *Client) Status(ctx context.Context) (Status, error) {
 	if err != nil {
 		return s, err
 	}
-	s.Catalog = len(rules) == len(lanes)
+	_, s.Catalog = rules[LaneCapture]
 	s.Rules = rules
 	return s, nil
 }
 
-func (c *Client) options() catalogOptions {
-	return catalogOptions{ProxyAddress: c.ProxyAddress, EgressAddress: c.EgressAddress, Token: c.Token, StateDir: c.StateDir}
+func (c *Client) options(daily int) catalogOptions {
+	return catalogOptions{ProxyAddress: c.ProxyAddress, EgressAddress: c.EgressAddress, Token: c.Token, StateDir: c.StateDir, Daily: daily}
 }
 
 // Check compiles the catalog against the current gateway config without
@@ -231,16 +286,16 @@ func (c *Client) Check() error {
 	if err != nil {
 		return err
 	}
-	_, err = compile(base, c.options())
+	_, err = compile(base, c.options(minDailyLanes))
 	return err
 }
 
-func (c *Client) write(rules map[string][]string) ([]string, error) {
+func (c *Client) write(names []string, rules map[string][]string) ([]string, error) {
 	if err := os.MkdirAll(c.StateDir, 0o700); err != nil {
 		return nil, err
 	}
 	var changed []string
-	for _, lane := range lanes {
+	for _, lane := range names {
 		path := filepath.Join(c.StateDir, lane+".yaml")
 		want, err := yaml.Marshal(map[string][]string{"payload": rules[lane]})
 		if err != nil {
@@ -257,6 +312,21 @@ func (c *Client) write(rules map[string][]string) ([]string, error) {
 	return changed, nil
 }
 
+// laneFiles lists the selector files on disk, from this or an earlier process.
+func (c *Client) laneFiles() ([]string, error) {
+	paths, err := filepath.Glob(filepath.Join(c.StateDir, "*.yaml"))
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, p := range paths {
+		if lane := strings.TrimSuffix(filepath.Base(p), ".yaml"); isLane(lane) {
+			out = append(out, lane)
+		}
+	}
+	return out, nil
+}
+
 // refresh makes the running gateway reread selector files. Without the
 // catalog there is nothing to reread, which is reported as false.
 func (c *Client) refresh(ctx context.Context, changed []string) (bool, error) {
@@ -271,9 +341,21 @@ func (c *Client) refresh(ctx context.Context, changed []string) (bool, error) {
 	return true, nil
 }
 
+// dailyCapacity is the number of daily lanes a catalog holds for n module
+// sets: a power of two from minDailyLanes, so a growing number of sets
+// reloads the configuration rarely.
+func dailyCapacity(n int) int {
+	c := minDailyLanes
+	for c < n {
+		c *= 2
+	}
+	return c
+}
+
 // Select publishes a selection. Changing it rewrites only the selector files;
-// the full configuration is loaded once per process, and again whenever the
-// gateway has reloaded its own file since.
+// the full configuration is loaded once per process, again when more module
+// sets need daily lanes than it holds, and whenever the gateway has reloaded
+// its own file since.
 func (c *Client) Select(ctx context.Context, s Selection) error {
 	rules, err := s.rules()
 	if err != nil {
@@ -281,7 +363,11 @@ func (c *Client) Select(ctx context.Context, s Selection) error {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	changed, err := c.write(rules)
+	daily := dailyCapacity(len(s.Daily))
+	if c.installed {
+		daily = max(daily, c.daily)
+	}
+	changed, err := c.write(laneNames(daily), rules)
 	if err != nil {
 		return err
 	}
@@ -290,30 +376,37 @@ func (c *Client) Select(ctx context.Context, s Selection) error {
 		if err != nil {
 			return err
 		}
-		c.installed = len(loaded) == len(lanes)
+		c.installed = covers(loaded, laneNames(c.daily))
 	}
 	if !c.installed {
-		if len(rules[LaneCapture])+len(rules[LaneDaily]) == 0 {
+		empty := true
+		for _, payload := range rules {
+			empty = empty && len(payload) == 0
+		}
+		if empty {
 			// A catalog from an earlier process may still be loaded.
 			_, err = c.refresh(ctx, changed)
 			return err
 		}
-		return c.install(ctx)
+		return c.install(ctx, daily)
+	}
+	if daily > c.daily {
+		return c.install(ctx, daily)
 	}
 	loaded, err := c.refresh(ctx, changed)
 	if err == nil && !loaded {
 		c.installed = false
-		err = c.install(ctx)
+		err = c.install(ctx, daily)
 	}
 	return err
 }
 
-func (c *Client) install(ctx context.Context) error {
+func (c *Client) install(ctx context.Context, daily int) error {
 	base, err := os.ReadFile(c.ConfigPath)
 	if err != nil {
 		return err
 	}
-	payload, err := compile(base, c.options())
+	payload, err := compile(base, c.options(daily))
 	if err != nil {
 		return err
 	}
@@ -322,19 +415,35 @@ func (c *Client) install(ctx context.Context) error {
 	if err = c.call(ctx, "PUT", "/configs", map[string]string{"payload": string(payload)}, nil); err != nil {
 		return err
 	}
-	c.installed = true
+	c.installed, c.daily = true, daily
 	return nil
 }
 
-// Clear empties both lanes. It needs neither the CA nor the proxy token, so the
-// LaunchAgent wrapper runs it whenever the service process ends.
+// Clear empties every lane. It needs neither the CA nor the proxy token, so
+// the wrapper runs it whenever the service process ends.
 func (c *Client) Clear(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if _, err := c.write(nil); err != nil {
+	names, err := c.laneFiles()
+	if err != nil {
 		return err
 	}
-	_, err := c.refresh(ctx, lanes)
+	if _, err = c.write(names, nil); err != nil {
+		return err
+	}
+	loaded, err := c.lanes(ctx)
+	if err != nil {
+		return err
+	}
+	var reload []string
+	for lane := range loaded {
+		reload = append(reload, lane)
+	}
+	// A loaded lane whose file is gone gets an empty one to reread.
+	if _, err = c.write(reload, nil); err != nil {
+		return err
+	}
+	_, err = c.refresh(ctx, reload)
 	return err
 }
 
@@ -352,8 +461,12 @@ func (c *Client) Remove(ctx context.Context) error {
 			return err
 		}
 	}
-	c.installed = false
-	for _, lane := range lanes {
+	c.installed, c.daily = false, 0
+	names, err := c.laneFiles()
+	if err != nil {
+		return err
+	}
+	for _, lane := range names {
 		if err := os.Remove(filepath.Join(c.StateDir, lane+".yaml")); err != nil && !os.IsNotExist(err) {
 			return err
 		}

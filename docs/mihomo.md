@@ -8,9 +8,9 @@ For initial setup, follow the [illustrated connection guide](../README.md#get-co
 
 Mihomo Capture runs on the same computer as mihomo. It reads the actual loaded YAML and uses the controller's `PUT /configs` endpoint to load a copy with capture nodes and an outbound listener. The source file is never written. File rule providers live in `gateway_state_dir`, which must be readable by mihomo and should be inside its home directory.
 
-The service adds proxies, rule providers, and sub-rules prefixed with `mihomo-capture-`, plus an HTTP outbound listener bound to loopback. The capture lane receives TCP from the selected device. The daily lane handles registered module hostnames for trusted devices. Each lane copies the original rules and sub-rules. Mihomo selects a policy while the connection's source metadata is still available, then sends its policy ID in the proxy CONNECT headers. After interception, the service re-enters mihomo through the outbound listener, whose own sub-rules select that policy without evaluating the main rules again. This also lets loopback traffic be captured without repeatedly entering the service.
+The service adds proxies, rule providers, and sub-rules prefixed with `mihomo-capture-`, plus an HTTP outbound listener bound to loopback. The capture lane receives TCP from the selected device. Each daily lane receives the trusted devices that share one set of enabled modules, limited to those modules' hostnames, and the lane's name tells the service which set it carries. Each lane copies the original rules and sub-rules. Mihomo selects a policy while the connection's source metadata is still available, then sends its policy ID in the proxy CONNECT headers. After interception, the service re-enters mihomo through the outbound listener, whose own sub-rules select that policy without evaluating the main rules again. This also lets loopback traffic be captured without repeatedly entering the service.
 
-Selection changes update only the provider files. The first nonempty selection loads the extra configuration. The service checks every five seconds and reinstalls it if mihomo has reloaded its own configuration. After editing mihomo's source file, reload it normally so the running configuration and file agree.
+Selection changes update only the provider files. The first nonempty selection loads the extra configuration with two daily lanes; when more module sets are in use than it holds, the service reloads it with twice as many. A set no device uses any more keeps its lane for 30 seconds before another set takes it, so a connection mihomo routed just before a change still gets the modules it was routed for. The service checks every five seconds and reinstalls the configuration if mihomo has reloaded its own. After editing mihomo's source file, reload it normally so the running configuration and file agree.
 
 ## Compatibility restrictions
 
@@ -22,7 +22,7 @@ The required inputs are the core's controller and final configuration. The servi
 
 ## Lifecycle
 
-Startup clears both selections. Stopping capture or revoking trust invalidates in-flight record tickets. Existing TCP connections may continue naturally; stopping recording does not actively disconnect them. Stopping the service disconnects connections it owns. Clearing records leaves capture active, so new connections can still produce records.
+Startup clears every lane. Stopping capture or revoking trust invalidates in-flight record tickets. Existing TCP connections may continue naturally; stopping recording does not actively disconnect them. Stopping the service disconnects connections it owns. Clearing records leaves capture active, so new connections can still produce records.
 
 `-clear-gateway` empties the selections. `-remove-gateway` asks the core to reload its original configuration and deletes selection files. Stop the service before removal, or the next synchronization can reinstall the entries. If the service hangs while its process is still running, mihomo keeps handing the selected traffic to it; restart the service.
 
@@ -30,4 +30,4 @@ Gateway discovery uses IPv4 neighbors. DHCP reassignment can leave a stale IP bi
 
 ## Test coverage
 
-Stock-core tests cover source-address and source-port routing, REJECT, loopback traffic passing through capture once, unselected sources, hostname exclusions, server-first protocols, half-close, UDP port blocking, reload, clear, and removal. They need neither TUN nor administrator privileges. Real application trust, desktop-client configuration merges, and system routing require separate manual verification.
+Stock-core tests cover source-address and source-port routing, REJECT, loopback traffic passing through capture once, unselected sources, hostname exclusions, a daily lane per module set and their growth, server-first protocols, half-close, UDP port blocking, reload, clear, and removal. They need neither TUN nor administrator privileges. Real application trust, desktop-client configuration merges, and system routing require separate manual verification.

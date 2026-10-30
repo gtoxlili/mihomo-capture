@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gtoxlili/mihomo-capture/internal/module"
 )
 
 // Routes is the API listener's handler. The certificate and the dashboard's
@@ -24,28 +25,41 @@ func (a *App) Routes(ca *x509.Certificate, dashboard http.Handler) http.Handler 
 	r.Use(middleware.Recoverer, middleware.GetHead)
 	certificateRoutes(r, ca.Raw)
 	r.Route("/v1", func(r chi.Router) {
-		r.Use(middleware.SetHeader("Cache-Control", "no-store"), a.requireToken, middleware.RequestSize(64<<10))
+		r.Use(middleware.SetHeader("Cache-Control", "no-store"), a.requireToken)
 		r.NotFound(func(w http.ResponseWriter, r *http.Request) { apiError(w, 404, errors.New("no such API route")) })
 		r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
 			apiError(w, 405, errors.New("method not allowed on this route"))
 		})
-		r.Get("/status", a.apiStatus(ca))
-		r.Get("/devices", a.apiDevices)
-		r.Post("/devices/refresh", a.apiRefreshDevices)
-		r.Put("/devices/{id}", a.apiRenameDevice)
-		r.Put("/devices/{id}/trust", a.apiTrust)
-		r.Put("/capture", a.apiStartCapture)
-		r.Delete("/capture", a.apiStopCapture)
-		r.Get("/modules", a.apiModules)
-		r.Post("/modules", a.apiRegisterModule)
-		r.Delete("/modules/{id}", a.apiRemoveModule)
-		r.Get("/records", a.apiRecords)
-		r.Get("/records/{id}", a.apiRecord)
-		r.Delete("/records", a.apiClearRecords)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequestSize(64 << 10))
+			r.Get("/status", a.apiStatus(ca))
+			r.Get("/devices", a.apiDevices)
+			r.Post("/devices/refresh", a.apiRefreshDevices)
+			r.Put("/devices/{id}", a.apiRenameDevice)
+			r.Put("/devices/{id}/trust", a.apiTrust)
+			r.Put("/capture", a.apiStartCapture)
+			r.Delete("/capture", a.apiStopCapture)
+			r.Get("/modules", a.apiModules)
+			r.Get("/modules/{id}", a.apiModule)
+			r.Put("/modules/{id}/activation", a.apiActivateModule)
+			r.Get("/modules/{id}/logs", a.apiModuleLogs)
+			r.Delete("/modules/{id}", a.apiRemoveModule)
+			r.Get("/records", a.apiRecords)
+			r.Get("/records/{id}", a.apiRecord)
+			r.Delete("/records", a.apiClearRecords)
+		})
+		// Definitions carry their scripts' code.
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequestSize(maxDefinitionBytes))
+			r.Post("/modules", a.apiCreateModule)
+			r.Put("/modules/{id}", a.apiUpdateModule)
+		})
 	})
 	r.Handle("/*", dashboard)
 	return r
 }
+
+const maxDefinitionBytes = 4 << 20
 
 // CARoutes is the LAN listener's handler: only the certificate, for devices
 // that cannot reach the API address before they trust anything.
@@ -123,9 +137,14 @@ func decode(w http.ResponseWriter, r *http.Request, v any) bool {
 }
 
 func mutationError(w http.ResponseWriter, err error) {
-	if os.IsNotExist(err) {
+	var definition module.Invalid
+	var input invalidInput
+	switch {
+	case os.IsNotExist(err):
 		apiError(w, 404, errors.New("resource not found"))
-	} else {
+	case errors.As(err, &definition), errors.As(err, &input):
+		apiError(w, 400, err)
+	default:
 		apiError(w, 409, err)
 	}
 }
@@ -139,7 +158,6 @@ func (a *App) apiStatus(ca *x509.Certificate) http.HandlerFunc {
 			c := *a.capture
 			capture = &c
 		}
-		hosts := a.hostnamesLocked()
 		syncErr := a.lastSyncError
 		a.mu.Unlock()
 		a.store.mu.Lock()
@@ -154,7 +172,7 @@ func (a *App) apiStatus(ca *x509.Certificate) http.HandlerFunc {
 				gatewayState = status
 			}
 		}
-		jsonResponse(w, 200, map[string]any{"api_version": 2, "phase": 1, "capture": capture, "hostnames": hosts, "ca": caInfo, "gateway": gatewayState, "gateway_error": syncErr, "storage": storage, "capabilities": map[string]any{"http": true, "https": true, "http2": true, "websocket_frames": true, "module_hostname_registration": true, "module_execution": false, "trust_detection": "operator-attestation", "body_capture": "bounded-wire-bytes", "quic": "optional-udp-port-block-on-selected-device"}})
+		jsonResponse(w, 200, map[string]any{"api_version": 3, "capture": capture, "ca": caInfo, "gateway": gatewayState, "gateway_error": syncErr, "storage": storage, "capabilities": map[string]any{"http": true, "https": true, "http2": true, "websocket_frames": true, "modules": []string{"header_rewrites", "url_rewrites", "map_locals", "body_rewrites", "scripts"}, "trust_detection": "operator-attestation", "body_capture": "bounded-wire-bytes", "quic": "optional-udp-port-block-on-selected-device"}})
 	}
 }
 
@@ -241,27 +259,71 @@ func (a *App) apiStopCapture(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) apiModules(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	m := append([]Module{}, a.modules...)
-	h := a.hostnamesLocked()
-	a.mu.Unlock()
-	jsonResponse(w, 200, map[string]any{"items": m, "hostnames": h, "execution_enabled": false})
+	jsonResponse(w, 200, map[string]any{"items": a.Modules()})
 }
 
-func (a *App) apiRegisterModule(w http.ResponseWriter, r *http.Request) {
-	var v struct {
-		Source    string            `json:"source"`
-		Arguments map[string]string `json:"arguments"`
-	}
-	if !decode(w, r, &v) {
+func (a *App) apiModule(w http.ResponseWriter, r *http.Request) {
+	m, err := a.Module(r.PathValue("id"))
+	if err != nil {
+		mutationError(w, err)
 		return
 	}
-	m, err := a.RegisterModule(r.Context(), v.Source, v.Arguments)
+	jsonResponse(w, 200, m)
+}
+
+func (a *App) apiCreateModule(w http.ResponseWriter, r *http.Request) {
+	var d module.Definition
+	if !decode(w, r, &d) {
+		return
+	}
+	m, err := a.CreateModule(d)
 	if err != nil {
 		mutationError(w, err)
 		return
 	}
 	jsonResponse(w, 201, m)
+}
+
+func (a *App) apiUpdateModule(w http.ResponseWriter, r *http.Request) {
+	var d module.Definition
+	if !decode(w, r, &d) {
+		return
+	}
+	m, err := a.UpdateModule(r.Context(), r.PathValue("id"), d)
+	if err != nil {
+		mutationError(w, err)
+		return
+	}
+	jsonResponse(w, 200, m)
+}
+
+func (a *App) apiActivateModule(w http.ResponseWriter, r *http.Request) {
+	var v struct {
+		Enabled *bool     `json:"enabled"`
+		Devices *[]string `json:"devices"`
+	}
+	if !decode(w, r, &v) {
+		return
+	}
+	if v.Enabled == nil {
+		apiError(w, 400, errors.New("enabled is required"))
+		return
+	}
+	m, err := a.ActivateModule(r.Context(), r.PathValue("id"), *v.Enabled, v.Devices)
+	if err != nil {
+		mutationError(w, err)
+		return
+	}
+	jsonResponse(w, 200, m)
+}
+
+func (a *App) apiModuleLogs(w http.ResponseWriter, r *http.Request) {
+	logs, err := a.ModuleLogs(r.PathValue("id"))
+	if err != nil {
+		mutationError(w, err)
+		return
+	}
+	jsonResponse(w, 200, map[string]any{"items": logs})
 }
 
 func (a *App) apiRemoveModule(w http.ResponseWriter, r *http.Request) {

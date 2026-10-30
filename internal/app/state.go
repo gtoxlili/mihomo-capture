@@ -11,18 +11,16 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gtoxlili/mihomo-capture/internal/gateway"
+	"github.com/gtoxlili/mihomo-capture/internal/module"
 )
 
-type diskModule struct {
-	Module
-	Text string `json:"content"`
-}
 type diskState struct {
-	Devices []Device     `json:"devices"`
-	Modules []diskModule `json:"modules"`
+	Devices []Device `json:"devices"`
+	Modules []Module `json:"modules"`
 }
 
 type gatewayBackend interface {
@@ -34,17 +32,20 @@ type gatewayBackend interface {
 }
 
 type App struct {
-	mu            sync.Mutex
-	Config        Config
-	Fingerprint   string
-	devices       map[string]Device
-	modules       []Module
+	mu          sync.Mutex
+	Config      Config
+	Fingerprint string
+	devices     map[string]Device
+	// modules are in creation order, the order their rules apply in.
+	modules       []*moduleState
+	active        atomic.Pointer[map[string]*module.Module] // enabled modules, read by every request
+	slots         []slot                                    // daily lanes by slot
+	engine        *module.Engine
 	capture       *Capture
 	generation    uint64
 	epoch         uint64
 	store         *Store
 	gate          gatewayBackend
-	processor     Processor
 	lastSyncError string
 	self          map[string]bool // MACs of this host, the gateway itself
 }
@@ -60,7 +61,16 @@ func New(c Config, fingerprint string, gate gatewayBackend) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &App{Config: c, Fingerprint: fingerprint, devices: map[string]Device{}, store: s, gate: gate, processor: noProcessor{}, self: localMACs()}
+	a := &App{Config: c, Fingerprint: fingerprint, devices: map[string]Device{}, store: s, gate: gate, self: localMACs()}
+	options := module.Options{StorePath: filepath.Join(c.DataDir, "script-store.json")}
+	if gate != nil {
+		options.Dial = func(ctx context.Context, policy, address string) (net.Conn, error) {
+			return gate.DialContext(ctx, gateway.PolicyID(policy), address)
+		}
+	}
+	if a.engine, err = module.NewEngine(options); err != nil {
+		return nil, err
+	}
 	b, err := os.ReadFile(filepath.Join(c.DataDir, "state.json"))
 	if err == nil {
 		var state diskState
@@ -76,24 +86,35 @@ func New(c Config, fingerprint string, gate gatewayBackend) (*App, error) {
 			a.devices[d.ID] = d
 		}
 		for _, m := range state.Modules {
-			m.Module.Content = m.Text
-			a.modules = append(a.modules, m.Module)
+			compiled, err := module.Compile(m.ID, m.Definition)
+			if err != nil {
+				return nil, fmt.Errorf("invalid state: module %s: %w", m.ID, err)
+			}
+			if m.Devices == nil {
+				m.Devices = []string{}
+			}
+			m.Definition = compiled.Definition
+			a.modules = append(a.modules, &moduleState{m, compiled})
 		}
 	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
+	a.publishModulesLocked()
 	return a, nil
 }
 
+// Close writes the scripts' persistent store.
+func (a *App) Close() error { return a.engine.Close() }
+
 func (a *App) snapshotLocked() diskState {
-	s := diskState{Devices: []Device{}, Modules: []diskModule{}}
+	s := diskState{Devices: []Device{}, Modules: []Module{}}
 	for _, d := range a.devices {
 		d.Capturing = false
 		s.Devices = append(s.Devices, d)
 	}
 	sort.Slice(s.Devices, func(i, j int) bool { return s.Devices[i].ID < s.Devices[j].ID })
 	for _, m := range a.modules {
-		s.Modules = append(s.Modules, diskModule{m, m.Content})
+		s.Modules = append(s.Modules, m.Module)
 	}
 	return s
 }
@@ -132,7 +153,8 @@ func (a *App) syncLocked(ctx context.Context) error {
 	if a.gate == nil {
 		return nil
 	}
-	sel := gateway.Selection{Hostnames: a.hostnamesLocked()}
+	sel := gateway.Selection{}
+	sets := map[string][]string{} // device IPs by module set
 	for _, d := range a.devicesLocked() {
 		switch {
 		case !d.Trusted || !d.Online:
@@ -140,9 +162,12 @@ func (a *App) syncLocked(ctx context.Context) error {
 			sel.CaptureIPs = append(sel.CaptureIPs, d.IPs...)
 			sel.BlockUDPPorts = append(sel.BlockUDPPorts, a.capture.BlockUDPPorts...)
 		default:
-			sel.DailyIPs = append(sel.DailyIPs, d.IPs...)
+			if key := a.moduleSetLocked(d.ID); key != "" {
+				sets[key] = append(sets[key], d.IPs...)
+			}
 		}
 	}
+	sel.Daily = a.dailyLanesLocked(sets)
 	err := a.gate.Select(ctx, sel)
 	if err != nil {
 		a.lastSyncError = err.Error()
@@ -319,15 +344,6 @@ type ticket struct {
 	generation, epoch uint64
 }
 
-func (a *App) captureTicket() ticket {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.capture == nil {
-		return ticket{}
-	}
-	return ticket{a.capture.DeviceID, a.capture.Generation, a.epoch}
-}
-
 func (a *App) record(t ticket, r *Record) {
 	if t.device == "" {
 		return
@@ -365,28 +381,4 @@ func samePorts(a, b []uint16) bool {
 		}
 	}
 	return true
-}
-func (a *App) hostnamesLocked() []string {
-	// Surge module patch precedence: each module applies to the previous result.
-	out := []string{}
-	for _, m := range a.modules {
-		mode, hosts := moduleHosts(m.Content)
-		switch mode {
-		case "replace":
-			out = append([]string{}, hosts...)
-		case "insert":
-			out = append(append([]string{}, hosts...), out...)
-		default:
-			out = append(out, hosts...)
-		}
-	}
-	return out
-}
-
-// shouldDecrypt applies to daily-lane connections: the gateway selected the
-// host already, and the service rechecks it against the current patch.
-func (a *App) shouldDecrypt(host string) bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return matchHosts(a.hostnamesLocked(), host)
 }

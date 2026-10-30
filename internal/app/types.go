@@ -21,18 +21,6 @@ type Device struct {
 	Capturing     bool   `json:"capturing"`
 }
 
-type Module struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Source    string    `json:"source"`
-	Hostnames []string  `json:"hostnames"`
-	SHA256    string    `json:"sha256"`
-	LoadedAt  time.Time `json:"loaded_at"`
-	Content   string    `json:"-"`
-	// Only the MITM hostname patch is parsed; module code is never executed.
-	Processing string `json:"processing"`
-}
-
 type Capture struct {
 	DeviceID      string    `json:"device_id"`
 	StartedAt     time.Time `json:"started_at"`
@@ -84,6 +72,9 @@ type Record struct {
 	Replayable bool   `json:"replayable"`
 	Error      string `json:"error,omitempty"`
 	Complete   bool   `json:"complete"`
+	// Modules names the modules whose rules took effect. The record shows
+	// the device's side: the request it sent and the response it received.
+	Modules []string `json:"modules,omitempty"`
 }
 
 // RecordSummary omits bodies, frames and replay commands. Fetch Record by ID
@@ -103,27 +94,16 @@ type RecordSummary struct {
 	Replayable bool      `json:"replayable"`
 	Error      string    `json:"error,omitempty"`
 	// ContentType is the response media type without parameters.
-	ContentType  string `json:"content_type,omitempty"`
-	ResponseSize int64  `json:"response_size"`
-	Frames       int    `json:"frames,omitempty"`
+	ContentType  string   `json:"content_type,omitempty"`
+	ResponseSize int64    `json:"response_size"`
+	Frames       int      `json:"frames,omitempty"`
+	Modules      []string `json:"modules,omitempty"`
 }
 
 func (r *Record) summary() RecordSummary {
 	media, _, _ := strings.Cut(r.Response.Headers.Get("Content-Type"), ";")
-	return RecordSummary{ID: r.ID, DeviceID: r.DeviceID, Session: r.Session, At: r.At, Method: r.Method, URL: r.URL, Host: r.Host, Path: r.Path, Status: r.Status, DurationMS: r.DurationMS, Complete: r.Complete, Replayable: r.Replayable, Error: r.Error, ContentType: strings.ToLower(strings.TrimSpace(media)), ResponseSize: r.Response.Body.Size, Frames: len(r.Frames)}
+	return RecordSummary{ID: r.ID, DeviceID: r.DeviceID, Session: r.Session, At: r.At, Method: r.Method, URL: r.URL, Host: r.Host, Path: r.Path, Status: r.Status, DurationMS: r.DurationMS, Complete: r.Complete, Replayable: r.Replayable, Error: r.Error, ContentType: strings.ToLower(strings.TrimSpace(media)), ResponseSize: r.Response.Body.Size, Frames: len(r.Frames), Modules: r.Modules}
 }
-
-// Processor handles decrypted HTTP.
-// Implementations must leave the message unchanged on error or cancellation.
-type Processor interface {
-	Request(*http.Request, []Module) (*http.Response, error)
-	Response(*http.Response, []Module) error
-}
-
-type noProcessor struct{}
-
-func (noProcessor) Request(*http.Request, []Module) (*http.Response, error) { return nil, nil }
-func (noProcessor) Response(*http.Response, []Module) error                 { return nil }
 
 func newID() string {
 	var b [16]byte
