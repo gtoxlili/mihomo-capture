@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="artboard" content="960x484">
+<title>How a connection keeps its policy</title>
+<link rel="stylesheet" href="diagram.css">
+<script>document.documentElement.lang = new URLSearchParams(location.search).get("lang") || "en"</script>
+<style>
+  .abs { position: absolute; }
+  .band { position: absolute; border-radius: 18px; }
+  .band.mihomo { background: rgb(255 255 255 / 0.55); border: 1px solid var(--line); }
+  .band.service { background: var(--ink); box-shadow: 0 8px 20px -6px rgb(16 24 40 / 0.4); }
+  .band .label { position: absolute; left: 16px; top: 12px; display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+  .band .label .ico { font-size: 15px; color: var(--muted); }
+  .band.service .label { color: #fff; }
+
+  .node { position: absolute; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; }
+  .node .head { display: flex; align-items: center; gap: 9px; }
+  .node.in-service { background: rgb(255 255 255 / 0.07); border: 1px solid rgb(255 255 255 / 0.14); border-radius: 12px; box-shadow: none; color: #fff; }
+  .in-service .sub { color: #aab2c0; }
+  .num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font: 600 12px/1 var(--mono); flex: none; }
+  .in-service .num { background: #fff; color: var(--ink); }
+
+  .end { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 8px; }
+  .end .badge-icon { width: 32px; height: 32px; font-size: 18px; }
+
+  .wires { position: absolute; left: 0; top: 0; }
+  .wires path { fill: none; stroke: var(--ink-2); stroke-width: 2.5; stroke-linecap: round; }
+
+  .wire-label { position: absolute; font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+  .wire-label.r { text-align: left; }
+  .wire-label.l { text-align: right; }
+  .chip { --t: var(--ink-2); }
+  .on-wire { position: absolute; transform: translate(-50%, -50%); }
+
+  .note { position: absolute; display: flex; gap: 8px; align-items: flex-start; font-size: 11.5px; line-height: 1.4; color: var(--muted); }
+  .note .badge-icon { width: 22px; height: 22px; border-radius: 6px; font-size: 13px; background: rgb(255 255 255 / 0.7); border: 1px solid var(--line); }
+  .foot { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 12px; color: var(--muted); }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 5px; background: var(--subtle); border: 1px solid var(--line); font: 500 10.5px/1.7 var(--mono); color: var(--ink-2); }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+</style>
+<body style="--w:960px;--h:484px">
+<div class="board">
+
+  <!-- mihomo band: rules (1) and egress (3) -->
+  <div class="band mihomo" style="left:176px;top:36px;width:592px;height:170px">
+    <div class="label"><svg class="ico"><use href="icons.svg#route"/></svg>mihomo</div>
+  </div>
+  <div class="card node" style="left:196px;top:72px;width:232px;height:104px">
+    <div class="head"><span class="num">1</span><span class="title"><span class="en">Rules pick a policy</span><span class="zh">规则选定策略</span></span></div>
+    <div class="sub"><span class="en">A copy of your rules runs with the device's own source IP and port.</span><span class="zh">用你规则的副本匹配，来源 IP 和端口是设备自己的。</span></div>
+  </div>
+  <div class="card node" style="left:516px;top:72px;width:232px;height:104px">
+    <div class="head"><span class="num">3</span><span class="title"><span class="en">Egress uses that policy</span><span class="zh">出口沿用这条策略</span></span></div>
+    <div class="sub"><span class="en">The loopback listener's own sub‑rules pick it. The main rules do not run again.</span><span class="zh">回环出口的子规则直接选中它，不再匹配主规则。</span></div>
+  </div>
+
+  <!-- service band: decrypt (2) -->
+  <div class="band service" style="left:268px;top:280px;width:420px;height:156px">
+    <div class="label">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#fff"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#171c26" stroke-opacity=".9" stroke-width="2.2"/><circle cx="16" cy="16" r="3.4" fill="#e5484d"/></svg>
+      Mihomo Capture
+    </div>
+  </div>
+  <div class="node in-service" style="left:288px;top:324px;width:380px;height:92px">
+    <div class="head"><span class="num">2</span><span class="title"><span class="en">Decrypt, record, apply modules</span><span class="zh">解密、记录并执行模块</span></span></div>
+    <div class="sub">
+      <span class="en"><span class="dot" style="background:var(--tally)"></span>Capture lane records the selected device.<br><span class="dot" style="background:#35a9c4"></span>Daily lane handles only the hosts a module lists.</span>
+      <span class="zh"><span class="dot" style="background:var(--tally)"></span>抓包通道记录被选中的设备。<br><span class="dot" style="background:#35a9c4"></span>日常通道只处理模块列出的主机。</span>
+    </div>
+  </div>
+
+  <!-- ends -->
+  <div class="card end" style="left:28px;top:84px;width:124px;height:80px">
+    <div class="badge-icon"><svg class="ico"><use href="icons.svg#devices"/></svg></div>
+    <div class="title"><span class="en">Your device</span><span class="zh">你的设备</span></div>
+  </div>
+  <div class="card end" style="left:816px;top:84px;width:116px;height:80px">
+    <div class="badge-icon"><svg class="ico"><use href="icons.svg#globe"/></svg></div>
+    <div class="title"><span class="en">Destination</span><span class="zh">目标服务</span></div>
+  </div>
+  <div class="abs sub" style="left:12px;top:172px;width:156px;text-align:center"><span class="en">system proxy · TUN<br>or gateway</span><span class="zh">系统代理 · TUN<br>或网关</span></div>
+
+  <!-- wires -->
+  <svg class="wires" width="960" height="488" viewBox="0 0 960 488">
+    <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+    <path d="M152 124 H194" marker-end="url(#a)"/>
+    <path d="M360 178 V278" marker-end="url(#a)"/>
+    <path d="M600 278 V178" marker-end="url(#a)"/>
+    <path d="M750 124 H814" marker-end="url(#a)"/>
+  </svg>
+  <div class="on-wire" style="left:360px;top:228px"><span class="chip">Proxy</span></div>
+  <div class="on-wire" style="left:600px;top:228px"><span class="chip">Proxy</span></div>
+  <div class="on-wire" style="left:782px;top:104px"><span class="chip">Proxy</span></div>
+  <div class="wire-label l" style="right:630px;top:219px;width:300px"><span class="en">CONNECT hands it over with the chosen policy</span><span class="zh">CONNECT 交出连接，带上选好的策略</span></div>
+  <div class="wire-label r" style="left:632px;top:219px;width:300px"><span class="en">dials back as that policy's user</span><span class="zh">以这条策略对应的用户回连</span></div>
+
+  <div class="note" style="left:28px;top:318px;width:216px"><div class="badge-icon"><svg class="ico"><use href="icons.svg#file"/></svg></div><div><span class="en">Lanes and egress live only in mihomo's runtime config. Your YAML is never written.</span><span class="zh">通道和出口只存在于 mihomo 的运行配置里，不会改写你的 YAML。</span></div></div>
+  <div class="note" style="left:716px;top:318px;width:216px"><div class="badge-icon"><svg class="ico"><use href="icons.svg#repeat"/></svg></div><div><span class="en">Loopback traffic from this computer enters the service once, never in a loop.</span><span class="zh">本机回环来源的流量只进服务一次，不会绕圈。</span></div></div>
+  <div class="foot"><span class="en">If the service stops, it empties its lanes and mihomo routes everything itself.</span><span class="zh">服务停止时会清空通道，所有流量回到 mihomo 自己的路径。</span></div>
+</div>
+</body>
+</html>

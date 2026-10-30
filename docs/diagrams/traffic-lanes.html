@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="artboard" content="960x436">
+<title>Which traffic goes where</title>
+<link rel="stylesheet" href="diagram.css">
+<script>document.documentElement.lang = new URLSearchParams(location.search).get("lang") || "en"</script>
+<style>
+  .lanes {
+    position: absolute; left: 28px; top: 24px; width: 904px;
+    display: grid;
+    grid-template-columns: 184px 1fr 128px 1fr 216px 1fr 108px;
+    grid-template-rows: 40px repeat(3, 114px);
+  }
+  .t-red { --t: var(--tally); }
+  .t-teal { --t: var(--signal); }
+  .t-grey { --t: var(--plain); }
+
+  .colhead { display: flex; align-items: center; gap: 7px; padding-left: 2px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+  .colhead .ico { font-size: 15px; color: var(--muted); }
+
+  .device { align-self: center; height: 102px; padding: 11px 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 7px; }
+  .device .head { display: flex; gap: 10px; align-items: flex-start; }
+  .device .col { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .device .pill { align-self: flex-start; }
+
+  /* A wire between two stations; the chip names the policy it carries. */
+  .hop { position: relative; display: flex; align-items: center; justify-content: center; }
+  .hop::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1.5px; border-radius: 2px; background: var(--t); }
+  .hop.end::after { content: ""; position: absolute; right: var(--ar, 0px); top: 50%; margin-top: -5px; border: 5px solid transparent; border-left: 8px solid var(--t); border-right: 0; }
+  .hop .note { position: absolute; top: 50%; margin-top: -33px; left: 0; right: 0; text-align: center; font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+
+  .station { margin: 6px 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 6px; padding: 0 10px; }
+  .station .badge-icon { width: 34px; height: 34px; font-size: 19px; }
+
+  .service { margin: 6px 0; }
+  .bay { position: absolute; left: 12px; right: 12px; height: 58px; padding: 9px 12px; border-radius: 9px; background: rgb(255 255 255 / 0.07); border: 1px solid rgb(255 255 255 / 0.12); display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+  .bay .title { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #fff; }
+  .bay .title::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--t); }
+  .bay.t-red .title::before { box-shadow: 0 0 0 3px rgb(229 72 77 / 0.3); }
+  .bay .sub { padding-left: 14px; font-size: 11.5px; white-space: nowrap; }
+  /* A tap on the line: where the service listens. */
+  .mods { position: absolute; left: 0; right: 0; top: 92px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11.5px; color: #aab2c0; }
+  .mods .ico { font-size: 14px; color: #5cc0d8; }
+  .tap { position: absolute; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; background: #fff; border: 3px solid var(--t); }
+  .tap.l { left: -7px; }
+  .tap.r { right: -7px; }
+
+  .bypass { position: relative; display: flex; align-items: flex-start; justify-content: center; }
+  .bypass::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1.5px; border-radius: 2px; background: var(--t); }
+  .bypass span { position: relative; margin-top: 31px; font-size: 11.5px; color: var(--muted); font-style: italic; }
+</style>
+<body style="--w:960px;--h:436px">
+<div class="board">
+  <div class="lanes">
+
+    <!-- column heads -->
+    <div class="colhead" style="grid-column:1;grid-row:1"><svg class="ico"><use href="icons.svg#devices"/></svg><span class="en">Devices</span><span class="zh">设备</span></div>
+    <div class="colhead" style="grid-column:3;grid-row:1;justify-content:center"><svg class="ico"><use href="icons.svg#route"/></svg>mihomo</div>
+    <div class="colhead" style="grid-column:5;grid-row:1;justify-content:center">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#171c26"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="2.2"/><circle cx="16" cy="16" r="3.4" fill="#e5484d"/></svg>
+      Mihomo Capture
+    </div>
+    <div class="colhead" style="grid-column:7;grid-row:1;justify-content:center"><svg class="ico"><use href="icons.svg#globe"/></svg><span class="en">Internet</span><span class="zh">互联网</span></div>
+
+    <!-- devices -->
+    <div class="card device t-red" style="grid-column:1;grid-row:2">
+      <div class="head">
+        <div class="badge-icon" style="background:var(--tally-wash);color:var(--tally-ink)"><svg class="ico"><use href="icons.svg#phone"/></svg></div>
+        <div class="col">
+          <div class="title"><span class="en">Selected device</span><span class="zh">选中抓包的设备</span></div>
+          <div class="sub"><span class="en">All its HTTP(S) traffic</span><span class="zh">全部 HTTP(S) 流量</span></div>
+        </div>
+      </div>
+      <div class="pill red"><span class="en">Recorded</span><span class="zh">记录</span></div>
+    </div>
+    <div class="card device t-teal" style="grid-column:1;grid-row:3">
+      <div class="head">
+        <div class="badge-icon" style="background:var(--signal-wash);color:var(--signal-ink)"><svg class="ico"><use href="icons.svg#tablet"/></svg></div>
+        <div class="col">
+          <div class="title"><span class="en">Trusted devices</span><span class="zh">受信设备</span></div>
+          <div class="sub"><span class="en">Only hosts a module lists</span><span class="zh">只有模块列出的主机</span></div>
+        </div>
+      </div>
+      <div class="pill teal"><span class="en">Rewritten · not recorded</span><span class="zh">改写，不记录</span></div>
+    </div>
+    <div class="card device t-grey" style="grid-column:1;grid-row:4">
+      <div class="head">
+        <div class="badge-icon"><svg class="ico"><use href="icons.svg#laptop"/></svg></div>
+        <div class="col">
+          <div class="title"><span class="en">Everything else</span><span class="zh">其余流量</span></div>
+          <div class="sub"><span class="en">Other devices, other hosts</span><span class="zh">其他设备、其他主机</span></div>
+        </div>
+      </div>
+      <div class="pill grey"><span class="en">Untouched</span><span class="zh">原样通过</span></div>
+    </div>
+
+    <!-- device -> mihomo -->
+    <div class="hop end t-red" style="grid-column:2;grid-row:2"></div>
+    <div class="hop end t-teal" style="grid-column:2;grid-row:3"></div>
+    <div class="hop end t-grey" style="grid-column:2;grid-row:4"></div>
+
+    <!-- mihomo -->
+    <div class="card station" style="grid-column:3;grid-row:2 / 5">
+      <div class="badge-icon"><svg class="ico"><use href="icons.svg#route"/></svg></div>
+      <div class="title"><span class="en">Your own rules pick the policy</span><span class="zh">按你自己的规则<br>选策略</span></div>
+      <div class="sub"><span class="en">Sees each device's real source IP and port</span><span class="zh">依据设备真实的<br>来源 IP 和端口</span></div>
+    </div>
+
+    <!-- mihomo -> service: the chosen policy rides along -->
+    <div class="hop end t-red" style="grid-column:4;grid-row:2;--ar:16px"><span class="note"><span class="en">policy chosen</span><span class="zh">选好的策略</span></span><span class="chip">Proxy</span></div>
+    <div class="hop end t-teal" style="grid-column:4;grid-row:3;--ar:16px"><span class="chip">DIRECT</span></div>
+    <div class="hop t-grey" style="grid-column:4;grid-row:4"><span class="chip">Media</span></div>
+
+    <!-- Mihomo Capture -->
+    <div class="card dark service" style="grid-column:5;grid-row:2 / 4">
+      <div class="bay t-red" style="top:22px">
+        <div class="title"><span class="en">capture lane</span><span class="zh">抓包通道</span></div>
+        <div class="sub"><span class="en">decrypt · record</span><span class="zh">解密 · 记录</span></div>
+      </div>
+      <div class="bay t-teal" style="top:136px">
+        <div class="title"><span class="en">daily lane</span><span class="zh">日常通道</span></div>
+        <div class="sub"><span class="en">decrypt listed hosts</span><span class="zh">解密所列主机</span></div>
+      </div>
+      <div class="mods"><svg class="ico"><use href="icons.svg#puzzle"/></svg><span class="en">modules apply in both</span><span class="zh">两条通道都执行模块</span></div>
+      <i class="tap l t-red" style="top:51px"></i><i class="tap r t-red" style="top:51px"></i>
+      <i class="tap l t-teal" style="top:165px"></i><i class="tap r t-teal" style="top:165px"></i>
+    </div>
+    <div class="bypass t-grey" style="grid-column:5;grid-row:4"><span class="en">never enters the service</span><span class="zh">不经过服务</span></div>
+
+    <!-- service -> out: the same policy -->
+    <div class="hop end t-red" style="grid-column:6;grid-row:2"><span class="note"><span class="en">same policy</span><span class="zh">同一条策略</span></span><span class="chip">Proxy</span></div>
+    <div class="hop end t-teal" style="grid-column:6;grid-row:3"><span class="chip">DIRECT</span></div>
+    <div class="hop end t-grey" style="grid-column:6;grid-row:4"><span class="chip">Media</span></div>
+
+    <!-- Internet -->
+    <div class="card station" style="grid-column:7;grid-row:2 / 5">
+      <div class="badge-icon"><svg class="ico"><use href="icons.svg#globe"/></svg></div>
+      <div class="title"><span class="en">Out through the same policy</span><span class="zh">沿同一条策略出去</span></div>
+      <div class="sub"><span class="en">the one your rules chose</span><span class="zh">就是你的规则<br>选的那条</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

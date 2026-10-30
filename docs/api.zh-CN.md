@@ -2,7 +2,7 @@
 
 [English](api.md)
 
-默认地址为 `http://127.0.0.1:19090`。`/v1` 下所有请求都需要 `Authorization: Bearer <API token>`，body 使用 JSON。令牌由 `-init` 生成，位置由 `api_token_file` 配置。`/ca.crt` 和 `/ca.pem` 不需要认证，只返回公开证书。
+默认地址为 `http://127.0.0.1:19090`。`/v1` 下所有请求都需要 `Authorization: Bearer <API token>`，body 使用 JSON。令牌由 `-init` 生成，位置由 `api_token_file` 配置。Dashboard 调用的就是这套 API，没有别的通道，所以它能做的事都可以用脚本完成。`/ca.crt` 和 `/ca.pem` 不需要认证，只返回公开证书。
 
 错误格式为 `{"error":{"code":"invalid_request","message":"..."}}`。输入不合法返回 400，无认证返回 401，无资源返回 404，状态冲突返回 409，controller 不可用通常返回 503。
 
@@ -45,6 +45,19 @@
   "scripts": [{"name": "tag", "type": "http-response", "pattern": "/profile$", "requires_body": true, "code": "$done({body: $response.body})"}]
 }
 ```
+
+想试一下的话，把这份定义存成 `module.json`，创建模块，把它启用到一台受信设备上，再读它的日志：
+
+```sh
+TOKEN=$(cat data/api-token)
+ID=$(curl -s -X POST http://127.0.0.1:19090/v1/modules \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d @module.json | jq -r .id)
+curl -s -X PUT http://127.0.0.1:19090/v1/modules/$ID/activation \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"enabled":true,"devices":["local"]}'
+curl -s -H "Authorization: Bearer $TOKEN" http://127.0.0.1:19090/v1/modules/$ID/logs
+```
+
+`local` 是本机模式下的设备 ID，网关模式下是设备的 MAC 地址。设备必须受信，否则在它受信之前模块不起作用。
 
 | 字段 | 内容 |
 | --- | --- |

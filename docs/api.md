@@ -2,7 +2,7 @@
 
 [简体中文](api.zh-CN.md)
 
-The default address is `http://127.0.0.1:19090`. Every `/v1` request requires `Authorization: Bearer <API token>`. Send JSON request bodies. `-init` creates the token at `api_token_file`. Public `/ca.crt` and `/ca.pem` endpoints serve only the CA certificate without authentication.
+The default address is `http://127.0.0.1:19090`. Every `/v1` request requires `Authorization: Bearer <API token>`. Send JSON request bodies. `-init` creates the token at `api_token_file`. The dashboard calls this same API and has no other access, so anything it does can be scripted. Public `/ca.crt` and `/ca.pem` endpoints serve only the CA certificate without authentication.
 
 Errors use `{"error":{"code":"invalid_request","message":"..."}}`. Invalid input returns 400, missing authentication 401, missing resources 404, state conflicts 409, and controller failures usually 503.
 
@@ -45,6 +45,19 @@ A module decrypts the hosts it lists for the trusted devices it is enabled on, a
   "scripts": [{"name": "tag", "type": "http-response", "pattern": "/profile$", "requires_body": true, "code": "$done({body: $response.body})"}]
 }
 ```
+
+To try it, save the definition as `module.json`, create the module, enable it on a trusted device, and read its log:
+
+```sh
+TOKEN=$(cat data/api-token)
+ID=$(curl -s -X POST http://127.0.0.1:19090/v1/modules \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d @module.json | jq -r .id)
+curl -s -X PUT http://127.0.0.1:19090/v1/modules/$ID/activation \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"enabled":true,"devices":["local"]}'
+curl -s -H "Authorization: Bearer $TOKEN" http://127.0.0.1:19090/v1/modules/$ID/logs
+```
+
+`local` is the device ID in local mode; in gateway mode it is the device's MAC address. The device must be trusted. The module ignores it until it is.
 
 | Field | Content |
 | --- | --- |

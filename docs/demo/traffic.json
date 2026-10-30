@@ -2,26 +2,35 @@
   "records": [
     {
       "id": "00000000000000000000000000000001",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:55Z",
+      "at": "2026-10-29T12:34:55.912Z",
       "method": "GET",
       "url": "https://api.example.test/v1/projects?limit=20",
       "host": "api.example.test",
-      "path": "/v1/projects",
+      "path": "/v1/projects?limit=20",
       "status": 200,
       "duration_ms": 42,
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 325,
+      "response_size": 214,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-001"
@@ -36,30 +45,156 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:55 GMT"
+          ],
           "X-Request-Id": [
             "demo-001"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "214"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"projects\": [\n    {\n      \"id\": \"demo-001\",\n      \"name\": \"Mihomo Capture\",\n      \"status\": \"active\",\n      \"requests\": 1284\n    },\n    {\n      \"id\": \"demo-002\",\n      \"name\": \"Local API playground\",\n      \"status\": \"active\",\n      \"requests\": 356\n    }\n  ],\n  \"pagination\": {\n    \"limit\": 20,\n    \"has_more\": false\n  }\n}",
-          "size": 325,
+          "data": "{\"projects\":[{\"id\":\"demo-001\",\"name\":\"Mihomo Capture\",\"status\":\"active\",\"requests\":1284},{\"id\":\"demo-002\",\"name\":\"Local API playground\",\"status\":\"active\",\"requests\":356}],\"pagination\":{\"limit\":20,\"has_more\":false}}",
+          "size": 214,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/projects?limit=20' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-001' --url 'https://api.example.test/v1/projects?limit=20'"
+    },
+    {
+      "id": "00000000000000000000000000000014",
+      "device_id": "02:4e:7b:3a:c1:91",
+      "session": 7,
+      "at": "2026-10-29T12:34:55.388Z",
+      "method": "GET",
+      "url": "https://pixel.tracker.test/p.gif?e=app_open",
+      "host": "pixel.tracker.test",
+      "path": "/p.gif?e=app_open",
+      "status": 404,
+      "duration_ms": 1,
+      "complete": true,
+      "replayable": true,
+      "modules": [
+        "Block ads"
+      ],
+      "response_size": 0,
+      "request": {
+        "headers": {
+          "Accept": [
+            "image/*,*/*;q=0.8"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "pixel.tracker.test"
+          ],
+          "User-Agent": [
+            "ExampleApp/2.4.0 (iPhone)"
+          ],
+          "X-Request-Id": [
+            "demo-020"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {},
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "curl": "curl --globoff --request 'GET' --header 'Accept: image/*,*/*;q=0.8' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: pixel.tracker.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-020' --url 'https://pixel.tracker.test/p.gif?e=app_open'"
+    },
+    {
+      "id": "00000000000000000000000000000013",
+      "device_id": "02:4e:7b:3a:c1:91",
+      "session": 7,
+      "at": "2026-10-29T12:34:54.236Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/flags",
+      "host": "api.example.test",
+      "path": "/v1/flags",
+      "status": 200,
+      "duration_ms": 2,
+      "complete": true,
+      "replayable": true,
+      "modules": [
+        "Mock feature flags"
+      ],
+      "content_type": "application/json",
+      "response_size": 211,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
+          "User-Agent": [
+            "ExampleApp/2.4.0 (iPhone)"
+          ],
+          "X-Request-Id": [
+            "demo-019"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Cache-Control": [
+            "no-store"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\"flags\":{\"new_checkout\":true,\"dark_mode\":true,\"beta_search\":false,\"ai_assistant\":true,\"offline_sync\":false},\"experiments\":{\"onboarding\":\"variant-b\",\"pricing_page\":\"control\"},\"refresh_after\":300,\"source\":\"mock\"}",
+          "size": 211,
+          "truncated": false
+        }
+      },
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-019' --url 'https://api.example.test/v1/flags'"
     },
     {
       "id": "00000000000000000000000000000002",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:54Z",
+      "at": "2026-10-29T12:34:53.940Z",
       "method": "GET",
       "url": "https://stream.example.test/events",
       "host": "stream.example.test",
@@ -68,18 +203,35 @@
       "duration_ms": 18,
       "complete": true,
       "replayable": true,
-      "content_type": "application/websocket",
       "response_size": 0,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "stream.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-002"
+          ],
+          "Connection": [
+            "Upgrade"
+          ],
+          "Upgrade": [
+            "websocket"
+          ],
+          "Sec-WebSocket-Version": [
+            "13"
+          ],
+          "Sec-WebSocket-Key": [
+            "ZGVtby1zdHJlYW0tMDAwMQ=="
           ]
         },
         "body": {
@@ -91,11 +243,14 @@
       },
       "response": {
         "headers": {
+          "Connection": [
+            "Upgrade"
+          ],
           "Upgrade": [
             "websocket"
           ],
-          "Connection": [
-            "Upgrade"
+          "Sec-WebSocket-Accept": [
+            "SjBeTnLqk3x1v0m8cXk9mYQ1h6s="
           ]
         },
         "body": {
@@ -105,7 +260,7 @@
           "truncated": false
         }
       },
-      "curl": "curl 'https://stream.example.test/events' -H 'Accept: application/json'",
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Connection: Upgrade' --header 'Host: stream.example.test' --header 'Sec-WebSocket-Key: ZGVtby1zdHJlYW0tMDAwMQ==' --header 'Sec-WebSocket-Version: 13' --header 'Upgrade: websocket' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-002' --url 'https://stream.example.test/events'",
       "frames": [
         {
           "at": "2026-10-29T12:34:54.000Z",
@@ -189,9 +344,9 @@
     },
     {
       "id": "00000000000000000000000000000003",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:53Z",
+      "at": "2026-10-29T12:34:53.610Z",
       "method": "POST",
       "url": "https://api.example.test/v1/projects",
       "host": "api.example.test",
@@ -201,17 +356,104 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 56,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-003"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Content-Length": [
+            "22"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\"name\":\"New project\"}",
+          "size": 22,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Cache-Control": [
+            "no-store"
+          ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:53 GMT"
+          ],
+          "X-Request-Id": [
+            "demo-003"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "56"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\"id\":\"demo-003\",\"name\":\"New project\",\"status\":\"active\"}",
+          "size": 56,
+          "truncated": false
+        }
+      },
+      "curl": "printf %s 'eyJuYW1lIjoiTmV3IHByb2plY3QifQ==' | base64 --decode | curl --globoff --request 'POST' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Content-Type: application/json' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-003' --data-binary @- --url 'https://api.example.test/v1/projects'"
+    },
+    {
+      "id": "00000000000000000000000000000015",
+      "device_id": "02:4e:7b:3a:c1:91",
+      "session": 7,
+      "at": "2026-10-29T12:34:52.931Z",
+      "method": "GET",
+      "url": "https://sdk.adnet.test/v2/slots?app=demo",
+      "host": "sdk.adnet.test",
+      "path": "/v2/slots?app=demo",
+      "status": 404,
+      "duration_ms": 1,
+      "complete": true,
+      "replayable": true,
+      "modules": [
+        "Block ads"
+      ],
+      "response_size": 0,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "sdk.adnet.test"
+          ],
+          "User-Agent": [
+            "ExampleApp/2.4.0 (iPhone)"
+          ],
+          "X-Request-Id": [
+            "demo-021"
           ]
         },
         "body": {
@@ -222,31 +464,21 @@
         }
       },
       "response": {
-        "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
-          "Cache-Control": [
-            "no-store"
-          ],
-          "X-Request-Id": [
-            "demo-003"
-          ]
-        },
+        "headers": {},
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "",
+          "size": 0,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/projects' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: sdk.adnet.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-021' --url 'https://sdk.adnet.test/v2/slots?app=demo'"
     },
     {
       "id": "00000000000000000000000000000004",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:52Z",
+      "at": "2026-10-29T12:34:52.405Z",
       "method": "GET",
       "url": "https://assets.example.test/app.css",
       "host": "assets.example.test",
@@ -255,15 +487,24 @@
       "duration_ms": 12,
       "complete": true,
       "replayable": true,
-      "content_type": "application/json",
-      "response_size": 32,
+      "content_type": "text/css",
+      "response_size": 77,
       "request": {
         "headers": {
           "Accept": [
-            "application/json"
+            "text/css,*/*;q=0.1"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "assets.example.test"
           ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-004"
@@ -278,30 +519,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:52 GMT"
+          ],
           "X-Request-Id": [
             "demo-004"
+          ],
+          "Content-Type": [
+            "text/css; charset=utf-8"
+          ],
+          "Content-Length": [
+            "77"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "body{margin:0;font:14px/1.5 system-ui}\n.card{border-radius:8px;padding:16px}\n",
+          "size": 77,
           "truncated": false
         }
       },
-      "curl": "curl 'https://assets.example.test/app.css' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: text/css,*/*;q=0.1' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: assets.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-004' --url 'https://assets.example.test/app.css'"
     },
     {
       "id": "00000000000000000000000000000005",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:51Z",
+      "at": "2026-10-29T12:34:51.288Z",
       "method": "GET",
       "url": "https://api.example.test/v1/profile",
       "host": "api.example.test",
@@ -311,14 +558,23 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 47,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-005"
@@ -333,30 +589,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:51 GMT"
+          ],
           "X-Request-Id": [
             "demo-005"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "47"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"id\":\"u_1024\",\"name\":\"Demo User\",\"plan\":\"pro\"}",
+          "size": 47,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/profile' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-005' --url 'https://api.example.test/v1/profile'"
     },
     {
       "id": "00000000000000000000000000000006",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:50Z",
+      "at": "2026-10-29T12:34:50.774Z",
       "method": "POST",
       "url": "https://api.example.test/v1/search",
       "host": "api.example.test",
@@ -366,52 +628,73 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 81,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-006"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Content-Length": [
+            "26"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "",
-          "size": 0,
+          "data": "{\"query\":\"demo\",\"limit\":5}",
+          "size": 26,
           "truncated": false
         }
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:50 GMT"
+          ],
           "X-Request-Id": [
             "demo-006"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "81"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"query\":\"demo\",\"results\":[{\"id\":\"demo-001\",\"title\":\"Mihomo Capture\"}],\"total\":1}",
+          "size": 81,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/search' -H 'Accept: application/json'"
+      "curl": "printf %s 'eyJxdWVyeSI6ImRlbW8iLCJsaW1pdCI6NX0=' | base64 --decode | curl --globoff --request 'POST' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Content-Type: application/json' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-006' --data-binary @- --url 'https://api.example.test/v1/search'"
     },
     {
       "id": "00000000000000000000000000000007",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:49Z",
+      "at": "2026-10-29T12:34:49.502Z",
       "method": "GET",
       "url": "https://api.example.test/v1/notifications",
       "host": "api.example.test",
@@ -420,15 +703,23 @@
       "duration_ms": 23,
       "complete": true,
       "replayable": true,
-      "content_type": "application/json",
       "response_size": 0,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-007"
@@ -443,11 +734,14 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
+          ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:49 GMT"
+          ],
+          "Etag": [
+            "\"n-42\""
           ],
           "X-Request-Id": [
             "demo-007"
@@ -460,13 +754,69 @@
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/notifications' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-007' --url 'https://api.example.test/v1/notifications'"
+    },
+    {
+      "id": "00000000000000000000000000000016",
+      "device_id": "02:4e:7b:3a:c1:91",
+      "session": 7,
+      "at": "2026-10-29T12:34:48.917Z",
+      "method": "GET",
+      "url": "https://img.adnet.test/banner/home-top.jpg",
+      "host": "img.adnet.test",
+      "path": "/banner/home-top.jpg",
+      "status": 404,
+      "duration_ms": 1,
+      "complete": true,
+      "replayable": true,
+      "modules": [
+        "Block ads"
+      ],
+      "response_size": 0,
+      "request": {
+        "headers": {
+          "Accept": [
+            "image/*,*/*;q=0.8"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "img.adnet.test"
+          ],
+          "User-Agent": [
+            "ExampleApp/2.4.0 (iPhone)"
+          ],
+          "X-Request-Id": [
+            "demo-022"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {},
+        "body": {
+          "encoding": "utf8",
+          "data": "",
+          "size": 0,
+          "truncated": false
+        }
+      },
+      "curl": "curl --globoff --request 'GET' --header 'Accept: image/*,*/*;q=0.8' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: img.adnet.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-022' --url 'https://img.adnet.test/banner/home-top.jpg'"
     },
     {
       "id": "00000000000000000000000000000008",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:48Z",
+      "at": "2026-10-29T12:34:48.350Z",
       "method": "GET",
       "url": "https://cdn.example.test/fonts/mono.woff2",
       "host": "cdn.example.test",
@@ -475,15 +825,24 @@
       "duration_ms": 16,
       "complete": true,
       "replayable": true,
-      "content_type": "application/json",
-      "response_size": 32,
+      "content_type": "font/woff2",
+      "response_size": 24,
       "request": {
         "headers": {
           "Accept": [
-            "application/json"
+            "*/*"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "cdn.example.test"
           ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-008"
@@ -498,30 +857,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:48 GMT"
+          ],
           "X-Request-Id": [
             "demo-008"
+          ],
+          "Content-Type": [
+            "font/woff2"
+          ],
+          "Content-Length": [
+            "24"
           ]
         },
         "body": {
-          "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "encoding": "base64",
+          "data": "d09GMgABAAAAAASkAA4AAAAACzAAAARV",
+          "size": 24,
           "truncated": false
         }
       },
-      "curl": "curl 'https://cdn.example.test/fonts/mono.woff2' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: */*' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: cdn.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-008' --url 'https://cdn.example.test/fonts/mono.woff2'"
     },
     {
       "id": "00000000000000000000000000000009",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:47Z",
+      "at": "2026-10-29T12:34:47.641Z",
       "method": "PATCH",
       "url": "https://api.example.test/v1/projects/demo",
       "host": "api.example.test",
@@ -531,52 +896,73 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 33,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-009"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Content-Length": [
+            "21"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "",
-          "size": 0,
+          "data": "{\"status\":\"archived\"}",
+          "size": 21,
           "truncated": false
         }
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:47 GMT"
+          ],
           "X-Request-Id": [
             "demo-009"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "33"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"id\":\"demo\",\"status\":\"archived\"}",
+          "size": 33,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/projects/demo' -H 'Accept: application/json'"
+      "curl": "printf %s 'eyJzdGF0dXMiOiJhcmNoaXZlZCJ9' | base64 --decode | curl --globoff --request 'PATCH' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Content-Type: application/json' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-009' --data-binary @- --url 'https://api.example.test/v1/projects/demo'"
     },
     {
       "id": "0000000000000000000000000000000a",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:46Z",
+      "at": "2026-10-29T12:34:46.178Z",
       "method": "GET",
       "url": "https://api.example.test/v1/missing",
       "host": "api.example.test",
@@ -586,14 +972,23 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 56,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-010"
@@ -608,30 +1003,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:46 GMT"
+          ],
           "X-Request-Id": [
             "demo-010"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "56"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"error\":{\"code\":\"not_found\",\"message\":\"No such route\"}}",
+          "size": 56,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/missing' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-010' --url 'https://api.example.test/v1/missing'"
     },
     {
       "id": "0000000000000000000000000000000b",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:45Z",
+      "at": "2026-10-29T12:34:45.730Z",
       "method": "GET",
       "url": "https://api.example.test/v1/activity",
       "host": "api.example.test",
@@ -641,14 +1042,23 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 29,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-011"
@@ -663,30 +1073,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:45 GMT"
+          ],
           "X-Request-Id": [
             "demo-011"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "29"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"items\":[],\"has_more\":false}",
+          "size": 29,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/activity' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-011' --url 'https://api.example.test/v1/activity'"
     },
     {
       "id": "0000000000000000000000000000000c",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:44Z",
+      "at": "2026-10-29T12:34:44.915Z",
       "method": "POST",
       "url": "https://api.example.test/v1/events",
       "host": "api.example.test",
@@ -696,17 +1112,105 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 17,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-012"
+          ],
+          "Content-Type": [
+            "application/json"
+          ],
+          "Content-Length": [
+            "42"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\"name\":\"screen_view\",\"screen\":\"projects\"}",
+          "size": 42,
+          "truncated": false
+        }
+      },
+      "response": {
+        "headers": {
+          "Cache-Control": [
+            "no-store"
+          ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:44 GMT"
+          ],
+          "X-Request-Id": [
+            "demo-012"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "17"
+          ]
+        },
+        "body": {
+          "encoding": "utf8",
+          "data": "{\"accepted\":true}",
+          "size": 17,
+          "truncated": false
+        }
+      },
+      "curl": "printf %s 'eyJuYW1lIjoic2NyZWVuX3ZpZXciLCJzY3JlZW4iOiJwcm9qZWN0cyJ9' | base64 --decode | curl --globoff --request 'POST' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Content-Type: application/json' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-012' --data-binary @- --url 'https://api.example.test/v1/events'"
+    },
+    {
+      "id": "00000000000000000000000000000017",
+      "device_id": "02:4e:7b:3a:c1:91",
+      "session": 7,
+      "at": "2026-10-29T12:34:43.602Z",
+      "method": "GET",
+      "url": "https://api.example.test/v1/flags?v=2",
+      "host": "api.example.test",
+      "path": "/v1/flags?v=2",
+      "status": 200,
+      "duration_ms": 1,
+      "complete": true,
+      "replayable": true,
+      "modules": [
+        "Mock feature flags"
+      ],
+      "content_type": "application/json",
+      "response_size": 211,
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
+          "User-Agent": [
+            "ExampleApp/2.4.0 (iPhone)"
+          ],
+          "X-Request-Id": [
+            "demo-023"
           ]
         },
         "body": {
@@ -718,30 +1222,27 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
-          "X-Request-Id": [
-            "demo-012"
+          "Content-Type": [
+            "application/json; charset=utf-8"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"flags\":{\"new_checkout\":true,\"dark_mode\":true,\"beta_search\":false,\"ai_assistant\":true,\"offline_sync\":false},\"experiments\":{\"onboarding\":\"variant-b\",\"pricing_page\":\"control\"},\"refresh_after\":300,\"source\":\"mock\"}",
+          "size": 211,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/events' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-023' --url 'https://api.example.test/v1/flags?v=2'"
     },
     {
       "id": "0000000000000000000000000000000d",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:43Z",
+      "at": "2026-10-29T12:34:43.120Z",
       "method": "GET",
       "url": "https://api.example.test/v1/preferences",
       "host": "api.example.test",
@@ -751,14 +1252,23 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 37,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-013"
@@ -773,30 +1283,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:43 GMT"
+          ],
           "X-Request-Id": [
             "demo-013"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "37"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"language\":\"zh-CN\",\"theme\":\"system\"}",
+          "size": 37,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/preferences' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-013' --url 'https://api.example.test/v1/preferences'"
     },
     {
       "id": "0000000000000000000000000000000e",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:42Z",
+      "at": "2026-10-29T12:34:42.466Z",
       "method": "GET",
       "url": "https://api.example.test/health",
       "host": "api.example.test",
@@ -806,14 +1322,23 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 15,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-014"
@@ -828,30 +1353,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:42 GMT"
+          ],
           "X-Request-Id": [
             "demo-014"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "15"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"status\":\"ok\"}",
+          "size": 15,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/health' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-014' --url 'https://api.example.test/health'"
     },
     {
       "id": "0000000000000000000000000000000f",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:41Z",
+      "at": "2026-10-29T12:34:41.859Z",
       "method": "GET",
       "url": "https://api.example.test/v1/projects/demo",
       "host": "api.example.test",
@@ -861,14 +1392,23 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 53,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-015"
@@ -883,30 +1423,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:41 GMT"
+          ],
           "X-Request-Id": [
             "demo-015"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "53"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"id\":\"demo\",\"name\":\"Demo project\",\"status\":\"active\"}",
+          "size": 53,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/projects/demo' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-015' --url 'https://api.example.test/v1/projects/demo'"
     },
     {
       "id": "00000000000000000000000000000010",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:40Z",
+      "at": "2026-10-29T12:34:40.337Z",
       "method": "GET",
       "url": "https://assets.example.test/app.js",
       "host": "assets.example.test",
@@ -915,15 +1461,24 @@
       "duration_ms": 14,
       "complete": true,
       "replayable": true,
-      "content_type": "application/json",
-      "response_size": 32,
+      "content_type": "application/javascript",
+      "response_size": 28,
       "request": {
         "headers": {
           "Accept": [
-            "application/json"
+            "*/*"
+          ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "assets.example.test"
           ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-016"
@@ -938,30 +1493,36 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:40 GMT"
+          ],
           "X-Request-Id": [
             "demo-016"
+          ],
+          "Content-Type": [
+            "application/javascript; charset=utf-8"
+          ],
+          "Content-Length": [
+            "28"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "console.log(\"demo bundle\");\n",
+          "size": 28,
           "truncated": false
         }
       },
-      "curl": "curl 'https://assets.example.test/app.js' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: */*' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: assets.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-016' --url 'https://assets.example.test/app.js'"
     },
     {
       "id": "00000000000000000000000000000011",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:39Z",
+      "at": "2026-10-29T12:34:39.704Z",
       "method": "DELETE",
       "url": "https://api.example.test/v1/drafts/demo",
       "host": "api.example.test",
@@ -970,15 +1531,23 @@
       "duration_ms": 22,
       "complete": true,
       "replayable": true,
-      "content_type": "application/json",
       "response_size": 0,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-017"
@@ -993,11 +1562,11 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
+          ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:39 GMT"
           ],
           "X-Request-Id": [
             "demo-017"
@@ -1010,13 +1579,13 @@
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/drafts/demo' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'DELETE' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-017' --url 'https://api.example.test/v1/drafts/demo'"
     },
     {
       "id": "00000000000000000000000000000012",
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "session": 7,
-      "at": "2026-10-29T12:34:38Z",
+      "at": "2026-10-29T12:34:38.251Z",
       "method": "GET",
       "url": "https://api.example.test/v1/status",
       "host": "api.example.test",
@@ -1026,14 +1595,23 @@
       "complete": true,
       "replayable": true,
       "content_type": "application/json",
-      "response_size": 32,
+      "response_size": 24,
       "request": {
         "headers": {
           "Accept": [
             "application/json"
           ],
+          "Accept-Encoding": [
+            "gzip, deflate, br"
+          ],
+          "Accept-Language": [
+            "zh-CN,zh-Hans;q=0.9"
+          ],
+          "Host": [
+            "api.example.test"
+          ],
           "User-Agent": [
-            "Example App / demo"
+            "ExampleApp/2.4.0 (iPhone)"
           ],
           "X-Request-Id": [
             "demo-018"
@@ -1048,46 +1626,359 @@
       },
       "response": {
         "headers": {
-          "Content-Type": [
-            "application/json; charset=utf-8"
-          ],
           "Cache-Control": [
             "no-store"
           ],
+          "Date": [
+            "Thu, 29 Oct 2026 12:34:38 GMT"
+          ],
           "X-Request-Id": [
             "demo-018"
+          ],
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ],
+          "Content-Length": [
+            "24"
           ]
         },
         "body": {
           "encoding": "utf8",
-          "data": "{\n  \"ok\": true,\n  \"demo\": true\n}",
-          "size": 32,
+          "data": "{\"status\":\"operational\"}",
+          "size": 24,
           "truncated": false
         }
       },
-      "curl": "curl 'https://api.example.test/v1/status' -H 'Accept: application/json'"
+      "curl": "curl --globoff --request 'GET' --header 'Accept: application/json' --header 'Accept-Encoding: gzip, deflate, br' --header 'Accept-Language: zh-CN,zh-Hans;q=0.9' --header 'Host: api.example.test' --header 'User-Agent: ExampleApp/2.4.0 (iPhone)' --header 'X-Request-Id: demo-018' --url 'https://api.example.test/v1/status'"
     }
   ],
   "devices": [
     {
-      "id": "local",
-      "mac": "",
-      "label": "本机 · Demo Mac",
+      "id": "02:4e:7b:3a:c1:91",
+      "mac": "02:4e:7b:3a:c1:91",
+      "label": "Demo iPhone",
       "ips": [
-        "127.0.0.1",
-        "198.18.0.1"
+        "192.168.1.21"
       ],
       "trusted": true,
-      "trust_evidence": "Demo only",
+      "trust_evidence": "Installed and fully trusted the current CA",
       "ca_fingerprint": "ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34",
       "online": true,
       "capturing": true
+    },
+    {
+      "id": "02:4e:7b:3a:c2:5d",
+      "mac": "02:4e:7b:3a:c2:5d",
+      "label": "Demo iPad",
+      "ips": [
+        "192.168.1.22"
+      ],
+      "trusted": true,
+      "trust_evidence": "Installed and fully trusted the current CA",
+      "ca_fingerprint": "ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34",
+      "online": true,
+      "capturing": false
+    },
+    {
+      "id": "02:6f:10:b8:44:07",
+      "mac": "02:6f:10:b8:44:07",
+      "label": "Living-room TV",
+      "ips": [
+        "192.168.1.30"
+      ],
+      "trusted": false,
+      "online": true,
+      "capturing": false
+    },
+    {
+      "id": "02:a3:5c:19:e0:2b",
+      "mac": "02:a3:5c:19:e0:2b",
+      "label": "Old laptop",
+      "ips": [],
+      "trusted": true,
+      "trust_evidence": "Installed the CA in the system keychain and set it to Always Trust",
+      "ca_fingerprint": "ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34",
+      "online": false,
+      "capturing": false
+    },
+    {
+      "id": "02:d8:51:0c:7a:e6",
+      "mac": "02:d8:51:0c:7a:e6",
+      "label": "",
+      "ips": [
+        "192.168.1.57"
+      ],
+      "trusted": false,
+      "online": true,
+      "capturing": false
     }
   ],
+  "modules": [
+    {
+      "id": "00000000000000000000000000000a01",
+      "enabled": true,
+      "devices": [
+        "02:4e:7b:3a:c1:91",
+        "02:4e:7b:3a:c2:5d",
+        "02:a3:5c:19:e0:2b"
+      ],
+      "created_at": "2026-10-20T09:12:00Z",
+      "updated_at": "2026-10-27T08:20:00Z",
+      "name": "Block ads",
+      "hostnames": [
+        "-static.adnet.test",
+        "*.adnet.test",
+        "pixel.tracker.test"
+      ],
+      "header_rewrites": [],
+      "url_rewrites": [
+        {
+          "pattern": "^https://[^/]+\\.adnet\\.test/(banner|splash|interstitial)/",
+          "replacement": "_",
+          "type": "reject"
+        },
+        {
+          "pattern": "^https://[^/]+\\.adnet\\.test/v\\d+/slots",
+          "replacement": "_",
+          "type": "reject"
+        },
+        {
+          "pattern": "^https://pixel\\.tracker\\.test/",
+          "replacement": "_",
+          "type": "reject"
+        }
+      ],
+      "map_locals": [],
+      "body_rewrites": [],
+      "scripts": []
+    },
+    {
+      "id": "00000000000000000000000000000a02",
+      "enabled": true,
+      "devices": [
+        "02:4e:7b:3a:c1:91"
+      ],
+      "created_at": "2026-10-29T10:41:30Z",
+      "updated_at": "2026-10-29T10:48:12Z",
+      "name": "Mock feature flags",
+      "hostnames": [
+        "api.example.test"
+      ],
+      "header_rewrites": [],
+      "url_rewrites": [],
+      "map_locals": [
+        {
+          "pattern": "^https://api\\.example\\.test/v1/flags(\\?.*)?$",
+          "data_type": "text",
+          "data": "{\"flags\":{\"new_checkout\":true,\"dark_mode\":true,\"beta_search\":false,\"ai_assistant\":true,\"offline_sync\":false},\"experiments\":{\"onboarding\":\"variant-b\",\"pricing_page\":\"control\"},\"refresh_after\":300,\"source\":\"mock\"}",
+          "status_code": 200,
+          "headers": {
+            "Cache-Control": "no-store",
+            "Content-Type": "application/json; charset=utf-8"
+          }
+        }
+      ],
+      "body_rewrites": [],
+      "scripts": []
+    },
+    {
+      "id": "00000000000000000000000000000a03",
+      "enabled": true,
+      "devices": [
+        "02:4e:7b:3a:c2:5d"
+      ],
+      "created_at": "2026-10-28T14:05:10Z",
+      "updated_at": "2026-10-29T09:30:05Z",
+      "name": "Staging switch",
+      "hostnames": [
+        "api.example.test",
+        "auth.example.test"
+      ],
+      "header_rewrites": [
+        {
+          "type": "http-request",
+          "pattern": "^https://api\\.example\\.test/",
+          "action": "header-add",
+          "name": "X-Env",
+          "value": "staging"
+        },
+        {
+          "type": "http-request",
+          "pattern": "^https://api\\.example\\.test/",
+          "action": "header-del",
+          "name": "If-None-Match"
+        }
+      ],
+      "url_rewrites": [
+        {
+          "pattern": "^https://(api|auth)\\.example\\.test/(.*)$",
+          "replacement": "https://$1.staging.example.test/$2",
+          "type": "header"
+        }
+      ],
+      "map_locals": [],
+      "body_rewrites": [],
+      "scripts": [
+        {
+          "name": "tag-env",
+          "type": "http-response",
+          "pattern": "^https://(api|auth)\\.staging\\.example\\.test/",
+          "code": "// Tag staging responses with the environment name and alert on server errors.\nconst env = $argument\n\nif ($response.status >= 500) {\n  $notification.post(\"Staging error\", String($response.status), $request.url)\n}\n\nif (!String($response.body).startsWith(\"{\")) throw new Error(\"not a JSON object\")\nconst body = JSON.parse($response.body)\nbody.env = env\nconsole.log(\"tagged\", $response.status, $response.body.length, \"bytes\")\n\n$done({\n  headers: Object.assign({}, $response.headers, { \"X-Env\": env }),\n  body: JSON.stringify(body),\n})\n",
+          "requires_body": true,
+          "binary_body_mode": false,
+          "full_header_mode": false,
+          "max_size": 1048576,
+          "timeout": 3,
+          "argument": "staging"
+        }
+      ]
+    },
+    {
+      "id": "00000000000000000000000000000a04",
+      "enabled": false,
+      "devices": [
+        "02:4e:7b:3a:c1:91",
+        "02:4e:7b:3a:c2:5d"
+      ],
+      "created_at": "2026-10-22T16:20:00Z",
+      "updated_at": "2026-10-26T15:02:30Z",
+      "name": "Trim feed",
+      "hostnames": [
+        "feed.example.test"
+      ],
+      "header_rewrites": [],
+      "url_rewrites": [],
+      "map_locals": [],
+      "body_rewrites": [
+        {
+          "type": "http-response-jq",
+          "pattern": "^https://feed\\.example\\.test/v2/home",
+          "jq": ".items |= map(select(.promoted | not))"
+        },
+        {
+          "type": "http-response-jq",
+          "pattern": "^https://feed\\.example\\.test/v2/home",
+          "jq": "del(.items[].tracking)"
+        }
+      ],
+      "scripts": []
+    },
+    {
+      "id": "00000000000000000000000000000a05",
+      "enabled": true,
+      "devices": [
+        "02:6f:10:b8:44:07"
+      ],
+      "created_at": "2026-10-28T20:30:00Z",
+      "updated_at": "2026-10-28T20:41:00Z",
+      "name": "Blank TV splash",
+      "hostnames": [
+        "splash.tvcdn.test"
+      ],
+      "header_rewrites": [],
+      "url_rewrites": [],
+      "map_locals": [
+        {
+          "pattern": "^https://splash\\.tvcdn\\.test/.+\\.(jpg|png)(\\?.*)?$",
+          "data_type": "tiny-gif",
+          "data": "",
+          "status_code": 200
+        }
+      ],
+      "body_rewrites": [],
+      "scripts": []
+    }
+  ],
+  "module_logs": {
+    "00000000000000000000000000000a01": [],
+    "00000000000000000000000000000a02": [],
+    "00000000000000000000000000000a03": [
+      {
+        "at": "2026-10-29T12:34:37.482Z",
+        "level": "info",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/feed?cursor=c2",
+        "message": "[cbcc7b00] tagged 200 41 bytes"
+      },
+      {
+        "at": "2026-10-29T12:34:02.915Z",
+        "level": "info",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/orders?status=open",
+        "message": "[a9ab92e6] tagged 503 28 bytes"
+      },
+      {
+        "at": "2026-10-29T12:34:02.913Z",
+        "level": "notify",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/orders?status=open",
+        "message": "Staging error — 503 — https://api.staging.example.test/v1/orders?status=open"
+      },
+      {
+        "at": "2026-10-29T12:33:20.447Z",
+        "level": "error",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/orders",
+        "message": "[815b7e0e] Error: not a JSON object at tag-env:8:52(30); the message passes unchanged"
+      },
+      {
+        "at": "2026-10-29T12:33:20.446Z",
+        "level": "notify",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/orders",
+        "message": "Staging error — 502 — https://api.staging.example.test/v1/orders"
+      },
+      {
+        "at": "2026-10-29T12:31:58.130Z",
+        "level": "error",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/export",
+        "message": "[2275f0ff] Error: not a JSON object at tag-env:8:52(30); the message passes unchanged"
+      },
+      {
+        "at": "2026-10-29T12:31:58.128Z",
+        "level": "warn",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/export",
+        "message": "script ran without the body: the body exceeds 1048576 bytes"
+      },
+      {
+        "at": "2026-10-29T12:30:41.659Z",
+        "level": "info",
+        "source": "tag-env",
+        "url": "https://auth.staging.example.test/oauth/token",
+        "message": "[78e37117] tagged 200 47 bytes"
+      },
+      {
+        "at": "2026-10-29T12:29:15.021Z",
+        "level": "info",
+        "source": "tag-env",
+        "url": "https://api.staging.example.test/v1/profile",
+        "message": "[d808ed23] tagged 200 52 bytes"
+      }
+    ],
+    "00000000000000000000000000000a04": [
+      {
+        "at": "2026-10-26T14:51:08.206Z",
+        "level": "warn",
+        "source": "body_rewrite",
+        "url": "https://feed.example.test/v2/home",
+        "message": "jq rule skipped: the body is not JSON: invalid character '<' looking for beginning of value"
+      },
+      {
+        "at": "2026-10-26T14:51:08.204Z",
+        "level": "warn",
+        "source": "body_rewrite",
+        "url": "https://feed.example.test/v2/home",
+        "message": "jq rule skipped: the body is not JSON: invalid character '<' looking for beginning of value"
+      }
+    ],
+    "00000000000000000000000000000a05": []
+  },
   "status": {
     "api_version": 3,
     "capture": {
-      "device_id": "local",
+      "device_id": "02:4e:7b:3a:c1:91",
       "started_at": "2026-10-29T12:26:14Z",
       "block_udp_ports": [
         443
@@ -1098,25 +1989,32 @@
       "name": "Mihomo Capture CA",
       "fingerprint": "ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34ab12cd34",
       "not_after": "2036-10-29T00:00:00Z",
-      "lan_url": ""
+      "lan_url": "http://192.168.1.2:19093/ca.crt"
     },
     "gateway": {
       "version": "v1.19.33",
       "catalog": true,
       "rules": {
-        "capture": 1,
-        "daily-0": 0,
+        "capture": 2,
+        "daily-0": 1,
         "daily-1": 0
       }
     },
     "gateway_error": "",
     "storage": {
-      "records": 18,
-      "bytes": 184632,
+      "records": 23,
+      "bytes": 31436,
       "max_records": 5000,
       "max_bytes": 268435456,
       "retention_hours": 24,
       "last_error": ""
+    }
+  },
+  "daily": {
+    "gateway_rules": {
+      "capture": 0,
+      "daily-0": 1,
+      "daily-1": 1
     }
   }
 }

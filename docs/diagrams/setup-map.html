@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="artboard" content="960x440">
+<title>Where each setting points</title>
+<link rel="stylesheet" href="diagram.css">
+<script>document.documentElement.lang = new URLSearchParams(location.search).get("lang") || "en"</script>
+<style>
+  .abs { position: absolute; }
+
+  /* One computer, one user: the boundary both programs must share. */
+  .boundary { position: absolute; left: 176px; top: 28px; width: 756px; height: 384px; border: 1.5px dashed #b4bcc9; border-radius: 22px; }
+  .boundary .tab { position: absolute; left: 22px; top: -11px; padding: 0 10px; background: #eceff4; font-size: 11.5px; font-weight: 500; color: var(--muted); }
+
+  .panel { position: absolute; top: 64px; height: 316px; padding: 0; }
+  .panel .head { white-space: nowrap; height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 16px; font-size: 13px; font-weight: 600; color: var(--ink-2); border-bottom: 1px solid var(--line); }
+  .panel .head .ico { font-size: 15px; color: var(--muted); }
+  .panel .head .mark { width: 20px; height: 20px; }
+  .panel .head .mono { font-weight: 500; font-size: 11.5px; color: var(--muted); }
+
+  .row { position: absolute; left: 0; right: 0; height: 88px; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .row .col { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+  /* Keys the operator fills in: teal, as in the dashboard. */
+  .key { display: inline-block; padding: 3px 9px; border-radius: 7px; background: var(--signal-wash); border: 1px solid var(--signal-line); color: var(--signal-ink); font: 500 12px/1.4 var(--mono); }
+  .keys { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+  .or { font-size: 11px; color: var(--muted); margin-left: 3px; }
+
+  .wires { position: absolute; left: 0; top: 0; }
+  .wires path { fill: none; stroke: var(--ink-2); stroke-width: 2.5; stroke-linecap: round; }
+  .wires path.read { stroke-dasharray: 2 6; }
+  .verb { position: absolute; width: 180px; text-align: center; font-size: 11.5px; line-height: 1.35; color: var(--ink-2); }
+  .verb .tag { display: inline-block; margin-top: 2px; padding: 0 6px; border-radius: 5px; background: var(--card); border: 1px solid var(--line); font: 500 10.5px/1.7 var(--mono); color: var(--ink-2); }
+
+  .end { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; padding: 8px; }
+  .end .badge-icon { width: 32px; height: 32px; font-size: 18px; }
+</style>
+<body style="--w:960px;--h:440px">
+<div class="board">
+
+  <!-- traffic in -->
+  <div class="card end" style="left:28px;top:172px;width:124px;height:96px">
+    <div class="badge-icon"><svg class="ico"><use href="icons.svg#devices"/></svg></div>
+    <div class="title"><span class="en">Apps and devices</span><span class="zh">应用与设备</span></div>
+  </div>
+  <div class="abs sub" style="left:8px;top:276px;width:164px;text-align:center"><span class="en">already routed through<br>mihomo</span><span class="zh">流量已经经过<br>mihomo</span></div>
+
+  <div class="boundary"><span class="tab"><span class="en">Same computer, same user</span><span class="zh">同一台电脑，同一个用户</span></span></div>
+
+  <!-- your mihomo -->
+  <div class="card panel" style="left:200px;width:264px">
+    <div class="head"><svg class="ico"><use href="icons.svg#route"/></svg><span class="en">Find these in your mihomo</span><span class="zh">在你的 mihomo 里找到这些</span></div>
+    <div class="row" style="top:46px">
+      <div class="badge-icon"><svg class="ico"><use href="icons.svg#plug"/></svg></div>
+      <div class="col"><div class="title"><span class="en">Controller</span><span class="zh">Controller</span></div><div class="sub"><span class="en">Its API address, or a Unix socket</span><span class="zh">它的 API 地址，或 Unix socket</span></div></div>
+    </div>
+    <div class="row" style="top:134px">
+      <div class="badge-icon"><svg class="ico"><use href="icons.svg#file"/></svg></div>
+      <div class="col"><div class="title"><span class="en">The final YAML</span><span class="zh">最终加载的 YAML</span></div><div class="sub"><span class="en">What mihomo actually loads, not the subscription</span><span class="zh">实际加载的文件，不是订阅</span></div></div>
+    </div>
+    <div class="row" style="top:222px">
+      <div class="badge-icon"><svg class="ico"><use href="icons.svg#folder"/></svg></div>
+      <div class="col"><div class="title"><span class="en">Mihomo home</span><span class="zh">mihomo 的 home 目录</span></div><div class="sub"><span class="en">Make a new folder inside it</span><span class="zh">在里面新建一个目录</span></div></div>
+    </div>
+  </div>
+
+  <!-- Mihomo Capture's config.yaml -->
+  <div class="card panel" style="left:652px;width:256px">
+    <div class="head">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#171c26"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="2.2"/><circle cx="16" cy="16" r="3.4" fill="#e5484d"/></svg>
+      Mihomo Capture <span class="mono">config.yaml</span>
+    </div>
+    <div class="row" style="top:46px">
+      <div class="keys"><span class="key">controller_url</span><span class="or"><span class="en">or</span><span class="zh">或</span></span><span class="key">controller_socket</span></div>
+    </div>
+    <div class="row" style="top:134px"><div class="keys"><span class="key">gateway_config</span></div></div>
+    <div class="row" style="top:222px"><div class="keys"><span class="key">gateway_state_dir</span></div></div>
+  </div>
+
+  <!-- what the service does with each -->
+  <svg class="wires" width="960" height="440" viewBox="0 0 960 440">
+    <defs><marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#475467" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+    <path d="M152 220 H198" marker-end="url(#a)"/>
+    <path d="M650 154 H466" marker-end="url(#a)"/>
+    <path class="read" d="M650 242 H466" marker-end="url(#a)"/>
+    <path d="M650 330 H466" marker-end="url(#a)"/>
+  </svg>
+  <div class="verb" style="left:468px;top:108px"><span class="en">loads a runtime copy</span><span class="zh">加载一份运行配置</span><br><span class="tag">PUT /configs</span></div>
+  <div class="verb" style="left:468px;top:196px"><span class="en">reads it, never writes it</span><span class="zh">只读，不改写</span></div>
+  <div class="verb" style="left:468px;top:284px"><span class="en">writes its selection files</span><span class="zh">写入选择文件</span></div>
+</div>
+</body>
+</html>
