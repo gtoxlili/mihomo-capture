@@ -18,7 +18,7 @@ Copy `config.example.yaml` to `config.yaml` only if you need to run the service.
 
 `make check` checks Go formatting, runs the Go race detector and vet, lints the frontend, and builds both the dashboard and the binary. It does not install dependencies; run `make install` first.
 
-Stock-core integration tests are optional locally and required in CI:
+Stock-core integration tests need an unmodified mihomo binary:
 
 ```sh
 MIHOMO_TEST_BINARY=/absolute/path/to/mihomo make test

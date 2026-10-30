@@ -27,4 +27,4 @@ This uses Chrome headless with temporary profiles and an ephemeral loopback serv
 python3 scripts/docs_diagrams.py
 ```
 
-The generator writes editable SVG and PNG versions in English and Chinese. README embeds repository-local PNGs so it works without third-party image services or a Mermaid renderer. It links CI as text because a private repository's dynamic badge cannot be fetched anonymously by every reader.
+The generator writes editable SVG and PNG versions in English and Chinese. README embeds repository-local PNGs so it works without third-party image services or a Mermaid renderer.
