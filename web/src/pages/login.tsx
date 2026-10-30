@@ -90,7 +90,7 @@ export function LoginPage() {
             给设备装根证书不需要令牌：
             <a href="/ca.crt" download className="ml-1 inline-flex items-center gap-1 text-signal hover:underline">
               <DownloadIcon className="size-3.5" />
-              下载 Mihomo Capture CA
+              下载根证书
             </a>
           </p>
         </div>

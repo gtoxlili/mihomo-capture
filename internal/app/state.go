@@ -229,7 +229,7 @@ func (a *App) Trust(ctx context.Context, id string, trusted bool, evidence strin
 		return os.ErrNotExist
 	}
 	if trusted && strings.TrimSpace(evidence) == "" {
-		return errors.New("trust_evidence is required: confirm " + CAName + " is installed and fully trusted on this device")
+		return errors.New("trust_evidence is required: confirm the current CA certificate is installed and fully trusted on this device")
 	}
 	old := d
 	oldCapture := a.capture
