@@ -184,13 +184,19 @@ func normalizeMAC(s string) (string, error) {
 	return strings.ToLower(m.String()), nil
 }
 
+// deviceID accepts the local device only in local mode; gateway devices are
+// identified by MAC address.
+func (a *App) deviceID(s string) (string, error) {
+	if s == localDeviceID && a.Config.Mode != "gateway" {
+		return s, nil
+	}
+	return normalizeMAC(s)
+}
+
 func (a *App) UpdateDevice(ctx context.Context, id, label string) error {
-	var err error
-	if id != localDeviceID {
-		id, err = normalizeMAC(id)
-		if err != nil {
-			return err
-		}
+	id, err := a.deviceID(id)
+	if err != nil {
+		return err
 	}
 	if len(label) > 200 {
 		return errors.New("label exceeds 200 characters")

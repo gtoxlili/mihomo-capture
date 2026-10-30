@@ -2,6 +2,9 @@ package app
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -52,5 +55,22 @@ func TestGatewayHostIsNotADevice(t *testing.T) {
 	}
 	if _, err := f.a.StartCapture(context.Background(), self, nil); err == nil {
 		t.Fatal("capture of the gateway host accepted")
+	}
+}
+
+// contract: docs/api.md — gateway device IDs are MAC addresses; `local` names
+// a device only in local mode, so gateway mode never stores one.
+func TestGatewayModeRejectsLocalDeviceID(t *testing.T) {
+	f := newFixture(t)
+	f.a.Config.Mode = "gateway"
+	req := httptest.NewRequest("PUT", "/v1/devices/local", strings.NewReader(`{"label":"phantom"}`))
+	req.Header.Set("Authorization", "Bearer "+f.a.Config.APIToken)
+	out := httptest.NewRecorder()
+	f.a.Routes(f.ca.Leaf, http.NotFoundHandler()).ServeHTTP(out, req)
+	f.a.mu.Lock()
+	_, stored := f.a.devices["local"]
+	f.a.mu.Unlock()
+	if out.Code < 400 || stored {
+		t.Fatalf("rename local in gateway mode: %d %s, stored %v", out.Code, out.Body.String(), stored)
 	}
 }

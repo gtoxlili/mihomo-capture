@@ -291,8 +291,8 @@ func (a *App) apiRecords(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	device := q.Get("device")
-	if device != "" && device != localDeviceID {
-		if device, err = normalizeMAC(device); err != nil {
+	if device != "" {
+		if device, err = a.deviceID(device); err != nil {
 			apiError(w, 400, errors.New("device must be a device ID"))
 			return
 		}
