@@ -10,7 +10,7 @@ README.md covers usage and the two modes, docs/mihomo.md how the capture lanes e
 
 Both modes share one capture path. `local`, the default, captures the machine running the service by its loopback, interface and configured source addresses. `gateway` captures one LAN device, identified by MAC from the neighbor table; the machine running mihomo is never a gateway-mode device.
 
-Modules are the service's own form, written through the API, never downloaded: hostnames plus header rewrites, URL rewrites, map locals, body rewrites and http-request/http-response scripts. docs/api.md is their specification. They carry no routing rules; routing stays mihomo's. Each module is enabled or disabled and lists the devices it acts on. internal/module is the engine; it never blocks a message, and every failure passes it through unchanged.
+Modules are the service's own form, written through the API, never downloaded: hostnames plus header rewrites, URL rewrites, map locals, body rewrites and http-request/http-response scripts. docs/api.md is their specification, and the repository names no other proxy tool's module or script format. They carry no routing rules; routing stays mihomo's. Each module is enabled or disabled and lists the devices it acts on. internal/module is the engine; it never blocks a message, and every failure passes it through unchanged.
 
 Devices that share one set of enabled modules share one daily lane, so the lane a connection arrives on tells the service which modules apply.
 
