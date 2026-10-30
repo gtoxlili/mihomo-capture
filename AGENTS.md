@@ -40,7 +40,7 @@ Docs hold the decisions, boundaries and cross-process semantics the code cannot 
 
 # Tests and verification
 
-Tests derive from the README, docs/api.md, docs/mihomo.md, the invariants above and upstream protocols, and name their source with `// invariant: I<n>`, `// contract: <file>`, `// repro:` or `// upstream:`. internal/app uses a fake gateway that records published selections. Stock-core behavior is verified only in internal/gateway, whose core tests need `MIHOMO_TEST_BINARY` set to an unmodified mihomo and skip without it.
+Tests derive from the README, docs/api.md, docs/mihomo.md, the invariants above and upstream protocols, and name their source with `// invariant: I<n>`, `// contract: <file>`, `// repro:` or `// upstream:`. internal/app uses a fake gateway that records published selections. Stock-core behavior is verified only in internal/gateway, whose core tests need `MIHOMO_TEST_BINARY` set to an unmodified mihomo and skip without it, CI included; run them locally after changing internal/gateway.
 
 The default check is `make check`. Without web/ changes, `go test -race ./...` and `go vet ./...` are enough.
 

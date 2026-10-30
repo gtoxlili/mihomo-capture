@@ -1,6 +1,6 @@
 # Mihomo Capture
 
-English | [简体中文](README.zh-CN.md) · [MIT license](LICENSE)
+English | [简体中文](README.zh-CN.md) · [MIT license](LICENSE) · [CI](https://github.com/gtoxlili/mihomo-capture/actions/workflows/ci.yml)
 
 Inspect HTTP, HTTPS, and WebSocket traffic through the mihomo instance on your computer. Start with local capture, or select a LAN device when your computer is its gateway. Requests keep mihomo's original outbound policy.
 

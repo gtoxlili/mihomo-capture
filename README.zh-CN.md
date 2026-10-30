@@ -1,6 +1,6 @@
 # Mihomo Capture
 
-[English](README.md) | 简体中文 · [MIT 许可证](LICENSE)
+[English](README.md) | 简体中文 · [MIT 许可证](LICENSE) · [CI](https://github.com/gtoxlili/mihomo-capture/actions/workflows/ci.yml)
 
 通过电脑上已有的 mihomo 查看 HTTP、HTTPS 请求和 WebSocket 帧。默认抓本机；电脑用作网关时，也可以选择一台局域网设备。抓包期间仍沿用 mihomo 原来的分流策略。
 

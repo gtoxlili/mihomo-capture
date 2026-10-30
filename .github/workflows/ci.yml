@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", "docs/**", "LICENSE", ".github/ISSUE_TEMPLATE/**"]
+  pull_request:
+    paths-ignore: ["**/*.md", "docs/**", "LICENSE", ".github/ISSUE_TEMPLATE/**"]
+  # The release workflow runs the same check before it packages a tag.
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  # Formatting, unit tests, vet, lint and both builds. The stock-core
+  # integration tests skip here; they are a local check, see CONTRIBUTING.md.
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: make install
+      - run: make check
